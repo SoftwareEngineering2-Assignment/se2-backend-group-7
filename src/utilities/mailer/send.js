@@ -8,12 +8,11 @@ module.exports = (to, subject, email) => {
    * @description Is used to send an email to a user
    */
   const msg = {
-    from: "karanikio@auth.gr",
+    from: 'karanikio@auth.gr',
     to,
     subject,
-    html: email
+    html: email,
   };
-
-  console.log(msg);
-  sg.send(msg).then(() => console.log("HERE"));
+  // eslint-disable-next-line
+  sg.send(msg).then(() => console.log('Message sent'));
 };
