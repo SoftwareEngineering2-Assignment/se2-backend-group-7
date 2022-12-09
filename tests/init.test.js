@@ -37,17 +37,64 @@ test('GET /sources returns correct response and status code', async (t) => {
   const { statusCode } = await t.context.got(`sources/sources?token=${token}`);
   t.is(statusCode, 200);
 });
-test('POST /sources returns correct response and status code', async (t) => {
+test('GET /sources with invalid token returns 403 status code', async (t) => {
+  const token = '123';
+  const { statusCode } = await t.context.got(`sources/sources?token=${token}`);
+  t.is(statusCode, 403);
+});
+test('POST /create-source returns correct response and status code', async (t) => {
   const token = jwtSign({ id: 1 });
 
   const api = await t.context.got.extend({
     responseType: 'json',
   });
 
-  const body = new Source({name: 'Name'});
+  const body = new Source({ name: 'Name' });
   const { statusCode } = await api(`sources/create-source?token=${token}`, {
     method: 'POST',
-    json: body
+    json: body,
   });
-   t.is(statusCode, 200);
+  t.is(statusCode, 200);
+});
+test('POST /create-source with invalid token returns 403', async (t) => {
+  const token = '123';
+
+  const api = await t.context.got.extend({
+    responseType: 'json',
+  });
+
+  const body = new Source({ name: 'Name' });
+  const { statusCode } = await api(`sources/create-source?token=${token}`, {
+    method: 'POST',
+    json: body,
+  });
+  t.is(statusCode, 403);
+});
+test('POST /delete-source returns correct response and status code', async (t) => {
+  const token = jwtSign({ id: 1 });
+
+  const api = await t.context.got.extend({
+    responseType: 'json',
+  });
+
+  const body = { id: 0 };
+  const { statusCode } = await api(`sources/delete-source?token=${token}`, {
+    method: 'POST',
+    json: body,
+  });
+  t.is(statusCode, 200);
+});
+test('POST /delete-source with invalid token returns 403', async (t) => {
+  const token = '123';
+
+  const api = await t.context.got.extend({
+    responseType: 'json',
+  });
+
+  const body = { id: 1 };
+  const { statusCode } = await api(`sources/delete-source?token=${token}`, {
+    method: 'POST',
+    json: body,
+  });
+  t.is(statusCode, 403);
 });
