@@ -294,5 +294,5 @@ test('POST /source returns correct response and status code when source does not
     method: 'POST',
     json: request,
   });
-  t.is(body.status, 200);
+  t.is(body.status, 409);
 });
