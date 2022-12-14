@@ -10,11 +10,9 @@ const Source = require('../models/source');
 router.get('/sources', authorization, async (req, res, next) => {
   try {
     const { id } = req.decoded;
-    console.warn('code id:', id);
     const foundSources = await Source.find({
       owner: mongoose.Types.ObjectId(id),
     });
-    console.warn('codeHash:', mongoose.Types.ObjectId(id));
     const sources = [];
     foundSources.forEach((s) => {
       sources.push({
@@ -38,7 +36,7 @@ router.get('/sources', authorization, async (req, res, next) => {
   }
 });
 
-router.post('/create-source', authorization, async (req, res, next) => {
+router.post('/create-source', authorization, async (req, res) => {
   try {
     const { name, type, url, login, passcode, vhost } = req.body;
     const { id } = req.decoded;
@@ -47,10 +45,7 @@ router.post('/create-source', authorization, async (req, res, next) => {
       name,
     });
     if (foundSource) {
-      return res.json({
-        status: 409,
-        message: 'A source with that name already exists.',
-      });
+      throw new Error('A source with that name already exists.');
     }
     await new Source({
       name,
@@ -64,11 +59,14 @@ router.post('/create-source', authorization, async (req, res, next) => {
 
     return res.json({ success: true });
   } catch (err) {
-    return next(err.body);
+    return res.json({
+      status: 409,
+      message: err.body,
+    });
   }
 });
 
-router.post('/change-source', authorization, async (req, res, next) => {
+router.post('/change-source', authorization, async (req, res) => {
   try {
     const { id, name, type, url, login, passcode, vhost } = req.body;
     const foundSource = await Source.findOne({
@@ -76,22 +74,15 @@ router.post('/change-source', authorization, async (req, res, next) => {
       owner: mongoose.Types.ObjectId(req.decoded.id),
     });
     if (!foundSource) {
-      return res.json({
-        status: 409,
-        message: 'The selected source has not been found.',
-      });
+      throw new Error('The selected source has not been found.');
     }
-
     const sameNameSources = await Source.findOne({
       _id: { $ne: mongoose.Types.ObjectId(id) },
       owner: mongoose.Types.ObjectId(req.decoded.id),
       name,
     });
     if (sameNameSources) {
-      return res.json({
-        status: 409,
-        message: 'A source with the same name has been found.',
-      });
+      throw new Error('A source with the same name has been found.');
     }
 
     foundSource.name = name;
@@ -104,11 +95,14 @@ router.post('/change-source', authorization, async (req, res, next) => {
 
     return res.json({ success: true });
   } catch (err) {
-    return next(err.body);
+    return res.json({
+      status: 409,
+      message: err.body,
+    });
   }
 });
 
-router.post('/delete-source', authorization, async (req, res, next) => {
+router.post('/delete-source', authorization, async (req, res) => {
   try {
     const { id } = req.body;
 
@@ -116,20 +110,19 @@ router.post('/delete-source', authorization, async (req, res, next) => {
       _id: mongoose.Types.ObjectId(id),
       owner: mongoose.Types.ObjectId(req.decoded.id),
     });
-    console.warn(foundSource);
     if (!foundSource) {
-      return res.json({
-        status: 409,
-        message: 'The selected source has not been found.',
-      });
+      throw new Error('The selected source has not been found.');
     }
     return res.json({ success: true });
   } catch (err) {
-    return next(err.body);
+    return res.json({
+      status: 409,
+      message: err.body,
+    });
   }
 });
 
-router.post('/source', async (req, res, next) => {
+router.post('/source', async (req, res) => {
   try {
     const { name, owner, user } = req.body;
     const userId = owner === 'self' ? user.id : owner;
@@ -138,10 +131,7 @@ router.post('/source', async (req, res, next) => {
       owner: mongoose.Types.ObjectId(userId),
     });
     if (!foundSource) {
-      return res.json({
-        status: 409,
-        message: 'The selected source has not been found.',
-      });
+      throw new Error('The selected source has not been found.');
     }
 
     const source = {};
@@ -156,11 +146,14 @@ router.post('/source', async (req, res, next) => {
       source,
     });
   } catch (err) {
-    return next(err.body);
+    return res.json({
+      status: 409,
+      message: err.body,
+    });
   }
 });
 
-router.post('/check-sources', authorization, async (req, res, next) => {
+router.post('/check-sources', authorization, async (req, res) => {
   try {
     const { sources } = req.body;
     const { id } = req.decoded;
@@ -196,7 +189,10 @@ router.post('/check-sources', authorization, async (req, res, next) => {
       newSources,
     });
   } catch (err) {
-    return next(err.body);
+    return res.json({
+      status: 409,
+      message: err.body,
+    });
   }
 });
 
