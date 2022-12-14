@@ -6,6 +6,8 @@ const test = require('ava').default;
 const got = require('got');
 const listen = require('test-listen');
 const Source = require('../src/models/source');
+const mongoose = require('mongoose');
+
 const app = require('../src/index');
 const { jwtSign } = require('../src/utilities/authentication/helpers');
 
@@ -50,7 +52,7 @@ test('GET /sources returns sources', async (t) => {
     vhost: '',
     owner: owner
   });
-  const sources = await Source.find({ name: 'name' });
+  const sources = await Source.find({ owner: owner });
   console.warn(sources);
   console.warn('testHash:', owner);
   const { statusCode, body } = await t.context.got(
