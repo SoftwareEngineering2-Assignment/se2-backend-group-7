@@ -2,7 +2,7 @@
 require('dotenv').config();
 
 const http = require('node:http');
-const test = require('ava').default;
+const test = require('ava').serial;
 const got = require('got');
 const listen = require('test-listen');
 const Source = require('../src/models/source');
@@ -33,27 +33,12 @@ test.after.always((t) => {
   User.findByIdAndDelete(user._id);
 });
 test.beforeEach(() => {
-  sinon.reset();
+  sinon.resetHistory();
+  sinon.restore(); // the clears the sandbox of all created fakes, stubs, etc
+  sinon.reset(); // resets fakes in the "new"/restored sandbox
 });
 // GET SOURCE
-test('GET /sources returns sources when provided a valid token', async (t) => {
-  // Create a JWT with the user's ID
-  const token = jwtSign({ id: user._id });
-  // Create a new source
-  await Source.create({
-    name: 'name',
-    type: 'type',
-    url: 'url',
-    login: 'login',
-    passcode: '',
-    vhost: '',
-    owner: user._id,
-  });
-  // Send a GET request to the /sources route with the token as a query parameter
-  const { statusCode } = await t.context.got(`sources/sources?token=${token}`);
-  // Assert that the status code of the response is 200
-  t.is(statusCode, 200);
-});
+
 test('GET /sources returns error when ecountering error', async (t) => {
   // Create a JWT with the user's ID
   const token = jwtSign({ id: user._id });
@@ -75,9 +60,27 @@ test('GET /sources returns error when ecountering error', async (t) => {
   // Assert that the status code of the response is 404
   t.is(statusCode, 404);
 
-  findStub.reset();
+  findStub.restore();
 });
-
+test('GET /sources returns sources when provided a valid token', async (t) => {
+    sinon.resetHistory();
+    // Create a JWT with the user's ID
+    const token = jwtSign({ id: user._id });
+    // Create a new source
+    await Source.create({
+      name: 'name',
+      type: 'type',
+      url: 'url',
+      login: 'login',
+      passcode: '',
+      vhost: '',
+      owner: user._id,
+    });
+    // Send a GET request to the /sources route with the token as a query parameter
+    const { statusCode } = await t.context.got(`sources/sources?token=${token}`);
+    // Assert that the status code of the response is 200
+    t.is(statusCode, 200);
+  });
 // CREATE SOURCE
 test('POST /create-source with valid data and token returns status code 200', async (t) => {
   // Generate a valid JWT token
