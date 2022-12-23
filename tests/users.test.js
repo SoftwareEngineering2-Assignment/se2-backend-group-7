@@ -22,8 +22,10 @@ test.after.always((t) => {
   t.context.server.close();
 });
 
+
 test('GET /users returns correct response and status code', async (t) => {
    // const token = jwtSign({id: 1});
+   
     const cPW = comparePassword({dgrt,ptpr});
     const pD =  passwordDigest({dgrt,ptpr});
     const {statusCode} = await t.context.got(`users?token=${token}`);
