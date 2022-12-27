@@ -4,22 +4,25 @@ require('dotenv').config();
 
 
 const http = require('node:http');
-const test = require('ava').serial;
+const test = require('ava').default;
 const got = require('got');
+const Source = require('../src/models/source');
+
 const listen = require('test-listen');
 const app = require('../src/index');
 const {jwtSign} = require('../src/utilities/authentication/helpers');
 const {comparePassword} = require('../src/utilities/authentication/helpers');
 const {passwordDigest} = require('../src/utilities/authentication/helpers');
-const User = require('../src/models/user');
+//const User = require('../src/models/user');
+const User = require('../src/routes/users');
 let user;
 const sinon =  require('sinon');
 
 
 
-test.before(async (t) => {
+test.before( (t) => {
   t.context.server = http.createServer(app);
-  t.context.prefixUrl = await listen(t.context.server);
+  t.context.prefixUrl =  listen(t.context.server);
   t.context.got = got.extend({
     http2: true, 
     throwHttpErrors: false, 
@@ -28,7 +31,7 @@ test.before(async (t) => {
     });
 
 
-user = await User.create({
+user =  User.create({
   username: 'user',
   password: 'password',
   email: 'email',
@@ -36,7 +39,7 @@ user = await User.create({
 });
 test.after.always((t) => {
   t.context.server.close();
-  User.findByIdAndDelete(user._id);
+ 
 });
 test.beforeEach(() => {
   sinon.resetHistory();
@@ -44,63 +47,64 @@ test.beforeEach(() => {
   sinon.reset(); 
 });
 
-test('GET /users returns correct response and status code', async (t) => {
+test('GET /users returns correct response and status code',  (t) => {
     const token = jwtSign({id: user._id});
    // const cPW = comparePassword({dgrt,ptpr});
   //  const pD =  passwordDigest({dgrt,ptpr});
   //  const {statusCode} = await t.context.got(`users?token=${token}`);
   //  t.is(statusCode, 200);
-
-  await User.create({
+   User.create({
   email: 'email',
   username: 'username',
   password: 'password'
  });
+
  const findStub = sinon
-    .stub(Source, 'find')
+    .stub(User, 'find')
     .throws(new Error('Something went wrong'));
-    const { statusCode } = await t.context.got(`sources/sources?token=${token}`);
+    const { statusCode } =  t.context.got(`users/users?token=${token}`);
     t.is(statusCode, 404);
     findStub.restore();
   });
  
 
                  //CREATE 
-  test('POST /users create user that already exists - 409 ', async (t) => {
+  test('POST /users create user that already exists - 409 ',  (t) => {
     const token = jwtSign({ id: user._id});
     
-    await User.create({
+
+    const { statusCode } =  t.context.got('users/create');
+
+    t.assert(body.success);
+
+     User.create({
       username:'usernameA',
       password: 'password',
       email: 'emailB',
     });
-    const api = await t.context.got.extend({
+    const api =  t.context.got.extend({
      responseType:'json',
     });
 
     const request = new User({username: 'usernameA'});
-    const {body} = await api(`users/create-users?token=${token}`,{
+    const {body} =  api(`users/create-users?token=${token}`,{
       method: 'POST',
-      json: 'request',
+      json: body,
     });
 
     t.is(body.status,409);
   });
 
-  //  const body  = new User({ username:'Name'});
-    //const { statusCode } = await api (`users/create-users?token=${token}`,{
+  //  const body  = new User({ username:'usernameA'});
+   // const { statusCode } = await api (`users/create-users?token=${token}`,{
      // method: 'POST',
       //json: body,
     //});
     //t.is(statusCode, 409);
 
-    
-   // await User.create({
-   //   username: 'username',
-   //   password: 'password',
-   //   email: 'email',
 
-   // });
+
+    
 
   
 
