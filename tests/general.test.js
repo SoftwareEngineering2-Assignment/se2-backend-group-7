@@ -37,3 +37,24 @@ test.beforeEach(() => {
   sinon.restore(); // the clears the sandbox of all created fakes, stubs, etc
   sinon.reset(); // resets fakes in the "new"/restored sandbox
 });
+// GET STATISTICS
+test('GET /statistics returns correct response and status code', async (t) => {
+  const { body, statusCode } = await t.context.got('general/statistics');
+    // Assert that the request is successful from body
+  t.assert(body.success);
+    // Assert that the status code of the response is 200
+  t.is(statusCode, 200);
+});
+// GET STATISTICS ERROR
+test('GET /statistics returns correct response and status code for error', async (t) => {
+  const findStub = sinon
+  .stub(Source, 'countDocuments')
+  .throws(new Error('Something went wrong'));
+  // Send a GET request to the /sources route with the token as a query parameter
+  const { body, statusCode } = await t.context.got('general/statistics');
+  // Assert that the status code of the response is 404
+  t.is(statusCode, 404);
+  ;
+  findStub.restore();
+});
+
