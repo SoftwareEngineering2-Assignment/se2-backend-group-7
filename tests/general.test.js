@@ -96,4 +96,14 @@ test('GET /test-url-request Sends POST request and returns response', async (t) 
   // Check that the status code of the response is 200
   t.is(statusCode, 200);
 });
+// GET TEST-URL-REQUEST PUT
+test('GET /test-url-request Sends PUT request and returns response', async (t) => {
+  // Send an HTTP GET request to the /test-url-request route
+  const { statusCode } = await t.context.got.get(
+    'general/test-url-request?url=https://www.google.gr&type=PUT'
+  );
+
+  // Check that the status code of the response is 200
+  t.is(statusCode, 200);
+});
 });
