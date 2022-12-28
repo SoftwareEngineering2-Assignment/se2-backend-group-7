@@ -106,4 +106,13 @@ test('GET /test-url-request Sends PUT request and returns response', async (t) =
   // Check that the status code of the response is 200
   t.is(statusCode, 200);
 });
+// GET TEST-URL-REQUEST INVALID
+test('GET /test-url-request Sends invalid request and returns response', async (t) => {
+  // Send an HTTP GET request to the /test-url-request route
+  const { body } = await t.context.got.get(
+    'general/test-url-request?url=https://www.google.gr'
+  );
+
+  // Check that the status code of the response is 500
+  t.is(body.status, 500);
 });
