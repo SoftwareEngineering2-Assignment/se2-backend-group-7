@@ -58,3 +58,22 @@ test('GET /statistics returns correct response and status code for error', async
   findStub.restore();
 });
 
+// GET TEST-URL
+test('GET /test-url returns correct status code', async (t) => {
+  const { body, statusCode } = await t.context.got('general/test-url');
+    // Assert that the status code of the response is 200
+  t.is(statusCode, 200);
+});
+
+// GET TEST-URL ERROR
+test('GET /test-url returns correct status code for error', async (t) => {
+  const findStub = sinon
+  .stub(Source, 'countDocuments')
+  .throws(new Error('Something went wrong'));
+  // Send a GET request to the /sources route with the token as a query parameter
+  const { body, statusCode } = await t.context.got('general/test-url');
+  // Assert that the status code of the response is 404
+  t.is(statusCode, 404);
+  ;
+  findStub.restore();
+});
