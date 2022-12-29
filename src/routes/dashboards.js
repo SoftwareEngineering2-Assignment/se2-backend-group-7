@@ -40,10 +40,7 @@ router.post('/create-dashboard',
       const {id} = req.decoded;
       const foundDashboard = await Dashboard.findOne({owner: mongoose.Types.ObjectId(id), name});
       if (foundDashboard) {
-        return res.json({
-          status: 409,
-          message: 'A dashboard with that name already exists.'
-        });
+        throw new Error('A dashboard with that name already exists.');
       }
       await new Dashboard({
         name,
@@ -55,7 +52,10 @@ router.post('/create-dashboard',
 
       return res.json({success: true});
     } catch (err) {
-      return next(err.body);
+      return res.json({
+        status: 409,
+        message: err.body,
+      });
     }
   }); 
 
@@ -66,15 +66,17 @@ router.post('/delete-dashboard',
       const {id} = req.body;
 
       const foundDashboard = await Dashboard.findOneAndRemove({_id: mongoose.Types.ObjectId(id), owner: mongoose.Types.ObjectId(req.decoded.id)});
+      
       if (!foundDashboard) {
-        return res.json({
-          status: 409,
-          message: 'The selected dashboard has not been found.'
-        });
+       
+        throw new Error('The selected dashboard has not been found.');
       }
       return res.json({success: true});
     } catch (err) {
-      return next(err.body);
+      return res.json({
+        status: 409,
+        message: err.body,
+      });
     }
   }); 
 
@@ -86,10 +88,7 @@ router.get('/dashboard',
 
       const foundDashboard = await Dashboard.findOne({_id: mongoose.Types.ObjectId(id), owner: mongoose.Types.ObjectId(req.decoded.id)});
       if (!foundDashboard) {
-        return res.json({
-          status: 409,
-          message: 'The selected dashboard has not been found.'
-        });
+        throw new Error('The selected dashboard has not been found.');
       }
 
       const dashboard = {};
@@ -111,7 +110,10 @@ router.get('/dashboard',
         sources
       });
     } catch (err) {
-      return next(err.body);
+      return res.json({
+        status: 409,
+        message: err.body,
+      });
     }
   });
 
