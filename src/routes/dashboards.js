@@ -54,8 +54,8 @@ router.post('/create-dashboard',
     } catch (err) {
       return res.json({
         status: 409,
-        message: err.body,
-      });
+        message: err.message
+      }); 
     }
   }); 
 
@@ -66,17 +66,15 @@ router.post('/delete-dashboard',
       const {id} = req.body;
 
       const foundDashboard = await Dashboard.findOneAndRemove({_id: mongoose.Types.ObjectId(id), owner: mongoose.Types.ObjectId(req.decoded.id)});
-      
       if (!foundDashboard) {
-       
         throw new Error('The selected dashboard has not been found.');
       }
       return res.json({success: true});
     } catch (err) {
       return res.json({
         status: 409,
-        message: err.body,
-      });
+        message: err.message
+      }); 
     }
   }); 
 
@@ -112,8 +110,8 @@ router.get('/dashboard',
     } catch (err) {
       return res.json({
         status: 409,
-        message: err.body,
-      });
+        message: err.message
+      }); 
     }
   });
 
@@ -132,14 +130,14 @@ router.post('/save-dashboard',
       }, {new: true});
 
       if (result === null) {
-        return res.json({
-          status: 409,
-          message: 'The selected dashboard has not been found.'
-        });
+        throw new Error('The selected dashboard has not been found.');
       }
       return res.json({success: true});
     } catch (err) {
-      return next(err.body);
+      return res.json({
+        status: 409,
+        message: err.message,
+      });
     }
   }); 
 
@@ -151,10 +149,7 @@ router.post('/clone-dashboard',
 
       const foundDashboard = await Dashboard.findOne({owner: mongoose.Types.ObjectId(req.decoded.id), name});
       if (foundDashboard) {
-        return res.json({
-          status: 409,
-          message: 'A dashboard with that name already exists.'
-        });
+        throw new Error('A dashboard with that name already exists.');
       }
 
       const oldDashboard = await Dashboard.findOne({_id: mongoose.Types.ObjectId(dashboardId), owner: mongoose.Types.ObjectId(req.decoded.id)});
@@ -169,7 +164,10 @@ router.post('/clone-dashboard',
 
       return res.json({success: true});
     } catch (err) {
-      return next(err.body);
+      return res.json({
+        status: 409,
+        message: err.message,
+      });
     }
   }); 
 
@@ -177,14 +175,12 @@ router.post('/check-password-needed',
   async (req, res, next) => {
     try {
       const {user, dashboardId} = req.body;
-      const userId = user.id;
-
+      const userId = user._id;
+      
       const foundDashboard = await Dashboard.findOne({_id: mongoose.Types.ObjectId(dashboardId)}).select('+password');
+      
       if (!foundDashboard) {
-        return res.json({
-          status: 409,
-          message: 'The specified dashboard has not been found.'
-        });
+        throw new Error('The specified dashboard has not been found.');
       }
 
       const dashboard = {};
@@ -230,7 +226,10 @@ router.post('/check-password-needed',
         passwordNeeded: true
       });
     } catch (err) {
-      return next(err.body);
+      return res.json({
+        status: 409,
+        message: err.message,
+      });
     }
   }); 
 

@@ -40,7 +40,7 @@ test.beforeEach(() => {
   sinon.restore(); // the clears the sandbox of all created fakes, stubs, etc
   sinon.reset(); // resets fakes in the "new"/restored sandbox
 });
- 
+
 // GET dashboards
 test('GET /dashboards returns error when encountering error', async (t) => {
   // Create a JWT with the user's ID
@@ -90,7 +90,7 @@ test('POST /create-dashboard with valid data and token returns status code 200',
   // Generate a valid JWT token
   const token = jwtSign({id: user._id});
   // Initialize the API object with JSON response type
-  const api = await t.context.got.extend({responseType: 'json' });
+  const api = await t.context.got.extend({responseType: 'json'});
   
   // Create the request body
   const body = new Dashboard({name: 'Test Create Dashboard'});
@@ -120,7 +120,7 @@ test('POST /create-dashboard with duplicate name and valid token returns status 
   });
   
   // Initialize the API object with JSON response type
-  const api = await t.context.got.extend({responseType: 'json' });
+  const api = await t.context.got.extend({responseType: 'json'});
   
   // Create the request body with the name "used_name"
   const request = new Dashboard({name: 'used_name'});
@@ -156,7 +156,6 @@ test('POST /create-dashboard with invalid token returns status code 403', async 
 });
 
 // DELETE DASHBOARD
-
 test('POST /delete-dashboard returns correct status code and response when provided a valid token', async (t) => {
   // Create a JWT with the user's ID
   const token = jwtSign({id: user._id});
@@ -205,16 +204,15 @@ test('POST /delete-dashboard returns status code 409 when the dashboard does not
     json: requestBody,
   });
   
-  // Assert that the status code of the response is 200
+  // Assert that the status code of the response is 409
   t.is(body.status, 409);
 });
-
 
 test('POST /delete-dashboard returns status code 403 when provided an invalid token', async (t) => {
   // Create an invalid JWT
   const token = '123';
   // Create an instance of the `got` library with JSON response type
-  const api = await t.context.got.extend({responseType: 'json' });
+  const api = await t.context.got.extend({responseType: 'json'});
 
   // Create a request body with the dashboard ID to delete
   const body = {id: 1};
@@ -226,3 +224,414 @@ test('POST /delete-dashboard returns status code 403 when provided an invalid to
   // Assert that the status code of the response is 403
   t.is(statusCode, 403);
 }); 
+ 
+// GET DASHBOARD
+test('GET /dashboard returns correct status code and response when dashboard exists', async (t) => {
+  // Create a JWT with the user's ID
+  const token = jwtSign({id: user._id});
+  // Create a Dashboard with the name "name_dashboard"
+  const dashboardToRetrieve = await Dashboard.create({
+    name: 'name_dashboard',
+    layout: [{
+      i: '1', x: 6, y: 3, w: 6, h: 4, minW: 1, minH: 1
+    }],
+    items: {1: {type: 'iframe', name: 'Iframe', url: 'https://www.thmmy.gr/smf/'}},
+    nextId: 2,
+    owner: user._id,
+  });
+
+  // Create a new source for the user with the name "name_source"
+  await Source.create({
+    name: 'name_source',
+    type: 'type',
+    url: 'url',
+    login: 'login',
+    passcode: '',
+    vhost: '',
+    owner: user._id,
+  });
+ 
+  // Send a GET request to the /dashboards route with the token and id as query parameters
+  const {body, statusCode} = await t.context.got(`dashboards/dashboard?token=${token}&id=${dashboardToRetrieve._id}`);
+  
+  // Assert that the status code of the response is 200
+  t.is(body.dashboard.name, 'name_dashboard');
+  t.is(body.sources[0], 'name_source');
+  t.is(statusCode, 200);
+});
+
+test('GET /dashboard returns 409 status code and error message when dashboard does not exists', async (t) => {
+  // Create a JWT with the user's ID
+  const token = jwtSign({id: user._id});
+  // A valid id that does not corresponds to a dashboard of this user
+  const falseId = '000000000000000000000000';
+  // Send a GET request to the /dashboards route with the token and id as query parameters
+  const {body} = await t.context.got(`dashboards/dashboard?token=${token}&id=${falseId}`);
+  
+  // Assert that the status is 409 and shows the right message
+  t.is(body.status, 409);
+  t.is(body.message, 'The selected dashboard has not been found.');
+});
+
+test('GET /dashboard with invalid user token', async (t) => {
+  // Generate an invalid JWT token
+  const token = '123';
+  // Just a valid dashboard id 
+  const dashboardId = '100000000000000000000001';
+  // Send a GET request to the /dashboards route with the token and id as query parameters
+  const {body, statusCode} = await t.context.got(`dashboards/dashboard?token=${token}&id=${dashboardId}`);
+  
+  // Assert that the status code of the response is 403
+  t.is(statusCode, 403);
+  t.is(body.message, 'Authorization Error: Failed to verify token.');
+}); 
+
+// SAVE DASHBOARD
+test('POST /save-dashboard returns correct response and status code for valid request and token', async (t) => {
+  // Generate a JWT token for the user
+  const token = jwtSign({id: user._id});
+
+  // Create a new empty dashboard for the user
+  const emptyDashboard = await Dashboard.create({
+    name: 'name',
+    owner: user._id,
+  });
+
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+
+  // Build the request body
+  const request = {
+    id: emptyDashboard._id,
+    layout: [{
+      i: '1', x: 6, y: 3, w: 6, h: 4, minW: 1, minH: 1
+    },
+    {
+      i: '2', x: 19, y: 7, w: 5, h: 4, minW: 1, minH: 1
+    },
+    {
+      i: '3', x: 4, y: 8, w: 5, h: 4, minW: 1, minH: 1
+    }],
+    items: {
+      1: {type: 'iframe', name: 'Iframe', url: 'https://www.thmmy.gr/smf/'},
+      2: {
+        type: 'logs', name: 'Logs', source: 'Select source', topic: '', variable: '', maxMessages: -1, colorKeys: [], colorValues: []
+      },
+      3: {
+        type: 'gauge', name: 'Gauge', source: 'Select source', topic: '', variable: '', minValue: 0, maxValue: 100, leftColor: '#7ABF43', rightColor: '#DE162F', levels: 20, hideText: false, unit: 'm/s'
+      }
+    },
+    nextId: '4',
+  };
+
+  // Make the POST request to save dashboard
+  const {body, statusCode} = await api(`dashboards/save-dashboard?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the request was successful
+  t.is(body.success, true);
+  t.is(statusCode, 200);
+});
+
+test('POST /save-dashboard returns 409 when false dashboard id is provided', async (t) => {
+  // Generate a JWT token for the user
+  const token = jwtSign({id: user._id});
+
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+
+  // Build the request body for a dashboard that doesn't exist
+  const request = {
+    id: '100000000000000000000001',
+    layout: [{
+      i: '1', x: 6, y: 3, w: 6, h: 4, minW: 1, minH: 1
+    }],
+    items: {1: {type: 'iframe', name: 'Iframe', url: 'https://www.thmmy.gr/smf/'}},
+    nextId: '2',
+  };
+
+  // Make the POST request to save dashboard
+  const {body} = await api(`dashboards/save-dashboard?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the request was successful
+  t.is(body.status, 409);
+  t.is(body.message, 'The selected dashboard has not been found.');
+});
+
+test('POST /save-dashboard returns 403 when false user token is provided', async (t) => {
+  // Generate an invalid JWT token 
+  const token = '123';
+
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+
+  // Build the request body for a dashboard 
+  const request = {
+    id: '000000000000000000000000',
+    layout: [{
+      i: '1', x: 6, y: 3, w: 6, h: 4, minW: 1, minH: 1
+    }],
+    items: {1: {type: 'iframe', name: 'Iframe', url: 'https://www.thmmy.gr/smf/'}},
+    nextId: '2',
+  };
+
+  // Make the POST request to save dashboard
+  const {body} = await api(`dashboards/save-dashboard?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the request was successful
+  t.is(body.status, 403);
+  t.is(body.message, 'Authorization Error: Failed to verify token.');
+}); 
+
+// CLONE DASHBOARD
+
+test('POST /clone-dashboard returns correct status code when token and name are valid', async (t) => {
+  // Create a JWT with the user's ID
+  const token = jwtSign({id: user._id});
+  // Create a new empty dashboard for the user
+  const DashboardToClone = await Dashboard.create({
+    name: 'original_dashboard',
+    layout: [{
+      i: '1', x: 6, y: 3, w: 6, h: 4, minW: 1, minH: 1
+    }],
+    items: {1: {type: 'iframe', name: 'Iframe', url: 'https://www.thmmy.gr/smf/'}},
+    nextId: '2',
+    owner: user._id,
+  });
+  // Build the request body for the cloned dashboard 
+  const request = {
+    dashboardId: DashboardToClone._id,
+    name: 'clone_dashboard' 
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to clone dashboard
+  const {body, statusCode} = await api(`dashboards/clone-dashboard?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  t.is(body.success, true);
+  t.is(statusCode, 200);
+});
+
+test('POST /clone-dashboard returns 409 when the name already exists', async (t) => {
+  // Create a JWT with the user's ID
+  const token = jwtSign({id: user._id});
+  // Create a new empty dashboard for the user
+  const DashboardToClone = await Dashboard.create({
+    name: 'same_name',
+    layout: [{
+      i: '1', x: 6, y: 3, w: 6, h: 4, minW: 1, minH: 1
+    }],
+    items: {1: {type: 'iframe', name: 'Iframe', url: 'https://www.thmmy.gr/smf/'}},
+    nextId: '2',
+    owner: user._id,
+  });
+  // Build the request body for the cloned dashboard, given the same name as the original 
+  const request = {
+    dashboardId: DashboardToClone._id,
+    name: 'same_name' 
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to clone dashboard
+  const {body} = await api(`dashboards/clone-dashboard?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  t.is(body.status, 409);
+  t.is(body.message, 'A dashboard with that name already exists.');
+});
+
+test('POST /clone-dashboard returns 403 status code when token is invalid', async (t) => {
+  // Create an ivalid 
+  const token = 123;
+  // Create a new dashboard for the user
+  const DashboardToClone = await Dashboard.create({
+    name: 'original_dashboard',
+    layout: [{
+      i: '1', x: 6, y: 3, w: 6, h: 4, minW: 1, minH: 1
+    }],
+    items: {1: {type: 'iframe', name: 'Iframe', url: 'https://www.thmmy.gr/smf/'}},
+    nextId: '2',
+    owner: user._id,
+  });
+  // Build the request body for the cloned dashboard 
+  const request = {
+    dashboardId: DashboardToClone._id,
+    name: 'clone_dashboard' 
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to clone dashboard
+  const {body} = await api(`dashboards/clone-dashboard?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  t.is(body.status, 403);
+  t.is(body.message, 'Authorization Error: Failed to verify token.');
+});
+ 
+// CHECK PASSWORD NEEDED
+test('POST /check-password-needed user and owner of dashboard have the same id', async (t) => {
+  // Dashboard to check 
+  const checkDashboard = await Dashboard.create({
+    name: 'check_dashboard',
+    password: 'hellothere',
+    shared: true,
+    owner: user._id,
+  });
+
+  // Build the request body for the dashboard 
+  const request = {
+    user,
+    dashboardId: checkDashboard._id,
+    
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to clone dashboard
+  const {body, statusCode} = await api('dashboards/check-password-needed', {
+    method: 'POST',
+    json: request,
+  });
+ 
+  t.is(body.owner, 'self');
+  t.is(body.dashboard.name, 'check_dashboard');
+  t.is(statusCode, 200);
+});
+
+test('POST /check-password-needed user is not the owner and dashboard is not shared', async (t) => {
+  // Dashboard to check 
+  const checkDashboard = await Dashboard.create({
+    name: 'check_dashboard',
+    password: 'hellothere',
+    shared: false,
+    // Owner is not the user
+    owner: user._id,
+  });
+  // The user that is not the owner
+  const testUser = await User.create({
+    username: 'test user',
+    password: 'test password',
+    email: 'testemail',
+  });
+  // Build the request body for the dashboard 
+  const request = {
+    user: testUser,
+    dashboardId: checkDashboard._id,
+    
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to clone dashboard
+  const {body, statusCode} = await api('dashboards/check-password-needed', {
+    method: 'POST',
+    json: request,
+  });
+ 
+  t.is(body.owner, '');
+  t.is(body.shared, false);
+  t.is(statusCode, 200);
+  // Delete the test user
+  User.findByIdAndDelete(testUser._id);
+});
+
+test('POST /check-password-needed user is not the owner and dashboard is shared and has no password', async (t) => {
+  // Dashboard to check, by default password is null 
+  const checkDashboard = await Dashboard.create({
+    name: 'check_dashboard',
+    shared: true,
+    // Owner is not the user
+    owner: user._id,
+  });
+  // The user that is not the owner
+  const testUser = await User.create({
+    username: 'test user',
+    password: 'test password',
+    email: 'testemail',
+  });
+  // Build the request body for the dashboard 
+  const request = {
+    user: testUser,
+    dashboardId: checkDashboard._id,
+    
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to clone dashboard
+  const {body, statusCode} = await api('dashboards/check-password-needed', {
+    method: 'POST',
+    json: request,
+  });
+  
+  t.is(body.owner, `${user._id}`);
+  t.is(body.passwordNeeded, false);
+  t.is(body.dashboard.name, 'check_dashboard');
+  t.is(statusCode, 200);
+
+  // Delete the test user
+  User.findByIdAndDelete(testUser._id);
+});
+
+test('POST /check-password-needed user is not the owner and dashboard is shared and has  password', async (t) => {
+  // Dashboard to check
+  const checkDashboard = await Dashboard.create({
+    name: 'check_dashboard',
+    password: '123456789',
+    shared: true,
+    // Owner is not the user
+    owner: user._id,
+  });
+  // The user that is not the owner
+  const testUser = await User.create({
+    username: 'test user',
+    password: 'test password',
+    email: 'testemail',
+  });
+  // Build the request body for the dashboard 
+  const request = {
+    user: testUser,
+    dashboardId: checkDashboard._id,
+    
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to clone dashboard
+  const {body, statusCode} = await api('dashboards/check-password-needed', {
+    method: 'POST',
+    json: request,
+  });
+  
+  t.is(body.owner, '');
+  t.is(body.passwordNeeded, true);
+  t.is(body.shared, true);
+  t.is(statusCode, 200);
+
+  // Delete the test user
+  User.findByIdAndDelete(testUser._id);
+});
+
+test('POST /check-password-needed and dashboard does not exist', async (t) => {
+  // Build the request body for the dashboard 
+  const request = {
+    user,
+    dashboardId: 123,
+    
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to clone dashboard
+  const {body} = await api('dashboards/check-password-needed', {
+    method: 'POST',
+    json: request,
+  });
+  
+  t.is(body.status, 409);
+  t.is(body.message, 'The specified dashboard has not been found.');
+});
