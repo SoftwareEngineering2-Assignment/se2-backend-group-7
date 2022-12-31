@@ -79,7 +79,6 @@ test('GET /Dashboards returns sources when provided a valid token', async (t) =>
   // Send a GET request to the /dashboards route with the token as a query parameter
   const {body, statusCode} = await t.context.got(`dashboards/dashboards?token=${token}`);
   // Assert that the status code of the response is 200 and the test_dashboard has the name: name and 0 views
-
   t.is(body.dashboards[0].views, 0);
   t.is(body.dashboards[0].name, 'name');
   t.is(statusCode, 200);
@@ -356,7 +355,7 @@ test('POST /save-dashboard returns 409 when false dashboard id is provided', asy
     method: 'POST',
     json: request,
   });
-  // Assert that the request was successful
+  // Assert that the status is 409 and the dashboard has not been found.
   t.is(body.status, 409);
   t.is(body.message, 'The selected dashboard has not been found.');
 });
@@ -379,12 +378,12 @@ test('POST /save-dashboard returns 403 when false user token is provided', async
   };
 
   // Make the POST request to save dashboard
-  const {body} = await api(`dashboards/save-dashboard?token=${token}`, {
+  const {body, statusCode} = await api(`dashboards/save-dashboard?token=${token}`, {
     method: 'POST',
     json: request,
   });
-  // Assert that the request was successful
-  t.is(body.status, 403);
+  // Assert that the status code of the response is 403
+  t.is(statusCode, 403);
   t.is(body.message, 'Authorization Error: Failed to verify token.');
 }); 
 
@@ -415,6 +414,7 @@ test('POST /clone-dashboard returns correct status code when token and name are 
     method: 'POST',
     json: request,
   });
+  // Assert that the dashboard was clones successfully and the response code is 200
   t.is(body.success, true);
   t.is(statusCode, 200);
 });
@@ -444,6 +444,7 @@ test('POST /clone-dashboard returns 409 when the name already exists', async (t)
     method: 'POST',
     json: request,
   });
+  // Assert that the status is 409.  
   t.is(body.status, 409);
   t.is(body.message, 'A dashboard with that name already exists.');
 });
@@ -469,11 +470,12 @@ test('POST /clone-dashboard returns 403 status code when token is invalid', asyn
   // Initialize the API client
   const api = await t.context.got.extend({responseType: 'json'});
   // Make the POST request to clone dashboard
-  const {body} = await api(`dashboards/clone-dashboard?token=${token}`, {
+  const {body, statusCode} = await api(`dashboards/clone-dashboard?token=${token}`, {
     method: 'POST',
     json: request,
   });
-  t.is(body.status, 403);
+  // Assert that the status code of the response is 403
+  t.is(statusCode, 403);
   t.is(body.message, 'Authorization Error: Failed to verify token.');
 });
  
@@ -495,17 +497,17 @@ test('POST /check-password-needed user and owner of dashboard have the same id',
   };
   // Initialize the API client
   const api = await t.context.got.extend({responseType: 'json'});
-  // Make the POST request to clone dashboard
+  // Make the POST request to check if password is needed
   const {body, statusCode} = await api('dashboards/check-password-needed', {
     method: 'POST',
     json: request,
   });
- 
+  // Assert that the status code of the response is 200 and owner is the user, so it returns and the dashboard
   t.is(body.owner, 'self');
   t.is(body.dashboard.name, 'check_dashboard');
   t.is(statusCode, 200);
 });
-
+ 
 test('POST /check-password-needed user is not the owner and dashboard is not shared', async (t) => {
   // Dashboard to check 
   const checkDashboard = await Dashboard.create({
@@ -515,67 +517,70 @@ test('POST /check-password-needed user is not the owner and dashboard is not sha
     // Owner is not the user
     owner: user._id,
   });
-  // The user that is not the owner
+  // The user that is not the owner.
   const testUser = await User.create({
     username: 'test user',
     password: 'test password',
     email: 'testemail',
   });
-  // Build the request body for the dashboard 
+  // Build the request body for the dashboard.
   const request = {
     user: testUser,
     dashboardId: checkDashboard._id,
     
   };
-  // Initialize the API client
+  // Initialize the API client.
   const api = await t.context.got.extend({responseType: 'json'});
-  // Make the POST request to clone dashboard
+  // Make the POST request to check if password is needed.
   const {body, statusCode} = await api('dashboards/check-password-needed', {
     method: 'POST',
     json: request,
   });
- 
+  // Assert that the status code of the response is 200, owner is empty string, and the shared status is false.
+  // So it does not return the dashboard.
   t.is(body.owner, '');
   t.is(body.shared, false);
   t.is(statusCode, 200);
-  // Delete the test user
+  // Delete the test user.
   User.findByIdAndDelete(testUser._id);
 });
 
 test('POST /check-password-needed user is not the owner and dashboard is shared and has no password', async (t) => {
-  // Dashboard to check, by default password is null 
+  // Dashboard to check, by default password is null.
   const checkDashboard = await Dashboard.create({
     name: 'check_dashboard',
     shared: true,
-    // Owner is not the user
+    // Owner is not the user.
     owner: user._id,
   });
-  // The user that is not the owner
+  // The user that is not the owner.
   const testUser = await User.create({
     username: 'test user',
     password: 'test password',
     email: 'testemail',
   });
-  // Build the request body for the dashboard 
+  // Build the request body for the dashboard. 
   const request = {
     user: testUser,
     dashboardId: checkDashboard._id,
     
   };
-  // Initialize the API client
+  // Initialize the API client.
   const api = await t.context.got.extend({responseType: 'json'});
-  // Make the POST request to clone dashboard
+  // Make the POST request to check if password is needed
   const {body, statusCode} = await api('dashboards/check-password-needed', {
     method: 'POST',
     json: request,
   });
-  
+  // Assert that the status code of the response is 200, owner is not the user, dashboard is shared, a password is not required
+  // So it returns the dashboard.
   t.is(body.owner, `${user._id}`);
   t.is(body.passwordNeeded, false);
+  t.is(body.shared, true);
   t.is(body.dashboard.name, 'check_dashboard');
   t.is(statusCode, 200);
 
-  // Delete the test user
+  // Delete the test user.
   User.findByIdAndDelete(testUser._id);
 });
 
@@ -602,12 +607,14 @@ test('POST /check-password-needed user is not the owner and dashboard is shared 
   };
   // Initialize the API client
   const api = await t.context.got.extend({responseType: 'json'});
-  // Make the POST request to clone dashboard
+  // Make the POST request to check if password is needed
   const {body, statusCode} = await api('dashboards/check-password-needed', {
     method: 'POST',
     json: request,
   });
-  
+
+  // Assert that the status code of the response is 200, owner is empty string, a password is required
+  // and the shared status is true. So it does not return the dashboard.
   t.is(body.owner, '');
   t.is(body.passwordNeeded, true);
   t.is(body.shared, true);
@@ -626,12 +633,275 @@ test('POST /check-password-needed and dashboard does not exist', async (t) => {
   };
   // Initialize the API client
   const api = await t.context.got.extend({responseType: 'json'});
-  // Make the POST request to clone dashboard
+  // Make the POST request to check if password is needed
   const {body} = await api('dashboards/check-password-needed', {
     method: 'POST',
     json: request,
   });
-  
+  // Assert that the status of the response is 409
   t.is(body.status, 409);
   t.is(body.message, 'The specified dashboard has not been found.');
 });
+
+// CHECK PASSWORD
+test('POST /check-password dashboard exists and password is correct', async (t) => {
+  // Dashboard to check 
+  const checkDashboard = await Dashboard.create({
+    name: 'dash_check_password',
+    password: 'correct_password',
+    owner: user._id,
+  });
+
+  // Build the request body for the dashboard 
+  const request = {
+    dashboardId: checkDashboard._id,
+    password: 'correct_password'
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to check dashboards password
+  const {body, statusCode} = await api('dashboards/check-password', {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the status code of the response is 200 and the password given was correct
+  t.is(body.success, true);
+  t.is(body.correctPassword, true);
+  t.is(body.owner, `${user._id}`);
+  t.is(body.dashboard.name, 'dash_check_password');
+  t.is(statusCode, 200);
+});
+
+test('POST /check-password dashboard exists and password is wrong', async (t) => {
+  // Dashboard to check 
+  const checkDashboard = await Dashboard.create({
+    name: 'dash_check_password',
+    password: 'correct_password',
+    owner: user._id,
+  });
+
+  // Build the request body for the dashboard with a wrong password
+  const request = {
+    dashboardId: checkDashboard._id,
+    password: 'wrong_password'
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to check dashboards password
+  const {body, statusCode} = await api('dashboards/check-password', {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the status code of the response is 200 and a wrong password was given
+  t.is(body.success, true);
+  t.is(body.correctPassword, false);
+  t.is(statusCode, 200);
+});
+
+test('POST /check-password when dashboard does not exist', async (t) => {
+  // Build the request body for the dashboard that doesn't exist
+  const request = {
+    dashboardId: 123,
+    password: 'something'
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to check dashboards password
+  const {body} = await api('dashboards/check-password', {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the status code of the response is 409
+  t.is(body.status, 409);
+  t.is(body.message, 'The specified dashboard has not been found.'); 
+});
+
+// SHARE DASHBOARD
+test('POST /share-dashboard change shared status from true to false when dashboard exists', async (t) => {
+  // Create a JWT with the user's ID
+  const token = jwtSign({id: user._id});
+  // Dashboard to change share status 
+  const checkDashboard = await Dashboard.create({
+    name: 'shared_true_dashboard',
+    shared: true,
+    owner: user._id,
+  });
+  // Build the request body for the dashboard 
+  const request = {dashboardId: checkDashboard._id};
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to change share status of the dashboard
+  const {body, statusCode} = await api(`dashboards/share-dashboard?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the status code of the response is 200 and the share status is false
+  t.is(body.success, true);
+  t.is(body.shared, false);
+  t.is(statusCode, 200);
+});
+
+test('POST /share-dashboard change shared status from false to true when dashboard exists', async (t) => {
+  // Create a JWT with the user's ID
+  const token = jwtSign({id: user._id});
+  // Dashboard to change share status 
+  const checkDashboard = await Dashboard.create({
+    name: 'shared_false_dashboard',
+    shared: false,
+    owner: user._id,
+  });
+  // Build the request body for the dashboard 
+  const request = {dashboardId: checkDashboard._id};
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to change share status of the dashboard
+  const {body, statusCode} = await api(`dashboards/share-dashboard?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the status code of the response is 200 and the share status is true
+  t.is(body.success, true);
+  t.is(body.shared, true);
+  t.is(statusCode, 200);
+});
+
+test('POST /share-dashboard  when dashboard does not exist', async (t) => {
+  // Create a JWT with the user's ID
+  const token = jwtSign({id: user._id});
+  
+  // Build the request body for a dashboard that doesn't exist 
+  const request = {dashboardId: 123};
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to change share status of the dashboard
+  const {body} = await api(`dashboards/share-dashboard?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the status code of the response is 409 
+  t.is(body.status, 409);
+  t.is(body.message, 'The specified dashboard has not been found.');
+});
+
+test('POST /share-dashboard  when user does not exist', async (t) => {
+  // Create a JWT with the user's ID
+  const token = '123';
+
+  // Dashboard to change share status 
+  const checkDashboard = await Dashboard.create({
+    name: 'not user dashboard',
+    shared: false,
+    owner: user._id,
+  });
+  // Build the request body for the dashboard 
+  const request = {dashboardId: checkDashboard._id};
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to change share status of the dashboard.
+  const {body, statusCode} = await api(`dashboards/share-dashboard?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the status code of the response is 403
+  t.is(statusCode, 403);
+  t.is(body.message, 'Authorization Error: Failed to verify token.');
+});
+
+// CHANGE PASSWORD
+test('POST /change-password of dashboard that exists with valid user token ', async (t) => {
+  // Create a JWT with the user's ID
+  const token = jwtSign({id: user._id});
+  // Dashboard to change password
+  const checkDashboard = await Dashboard.create({
+    name: 'change_password_dashboard',
+    password: 'old_password',
+    shared: true,
+    owner: user._id,
+  });
+  // Build the request body for the dashboard 
+  const request = {
+    dashboardId: checkDashboard._id,
+    password: 'new_password'
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to change password of the dashboard
+  const {body, statusCode} = await api(`dashboards/change-password?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the status code of the response is 200 and the success flag is true
+  t.is(body.success, true);
+  t.is(statusCode, 200);
+});
+
+test('POST /change-password of dashboard that exists with no password with valid user token ', async (t) => {
+  // Create a JWT with the user's ID
+  const token = jwtSign({id: user._id});
+  // Dashboard to change password
+  const checkDashboard = await Dashboard.create({
+    name: 'null_password_dashboard',
+    owner: user._id,
+  });
+  // Build the request body for the dashboard 
+  const request = {
+    dashboardId: checkDashboard._id,
+    password: 'just_a_password'
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to change password of the dashboard
+  const {body, statusCode} = await api(`dashboards/change-password?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the status code of the response is 200 and the success flag is true
+  t.is(body.success, true);
+  t.is(statusCode, 200);
+});
+
+test('POST /change-password of dashboard that does not exist with valid user token ', async (t) => {
+  // Create a JWT with the user's ID
+  const token = jwtSign({id: user._id});
+  
+  // Build the request body for the dashboard 
+  const request = {
+    dashboardId: 123,
+    password: 'new_password'
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to change password of the dashboard
+  const {body} = await api(`dashboards/change-password?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the status code of the response is 409 
+  t.is(body.status, 409);
+  t.is(body.message, 'The specified dashboard has not been found.');
+});
+
+test('POST /change-password with wrong user token provided ', async (t) => {
+  // Create a JWT with the user's ID
+  const token = '123';
+  // Dashboard to change password
+  const checkDashboard = await Dashboard.create({
+    name: 'a_dashboard',
+    owner: user._id,
+  });
+  // Build the request body for the dashboard 
+  const request = {
+    dashboardId: checkDashboard._id,
+    password: 'another_password'
+  };
+  // Initialize the API client
+  const api = await t.context.got.extend({responseType: 'json'});
+  // Make the POST request to change password of the dashboard
+  const {body, statusCode} = await api(`dashboards/change-password?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+  // Assert that the status code of the response is 403
+  t.is(statusCode, 403);
+  t.is(body.message, 'Authorization Error: Failed to verify token.');
+}); 
