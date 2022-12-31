@@ -276,7 +276,7 @@ router.post('/check-password-needed',
 
 // Route for checking if the password provided for the dashboard is correct.
 router.post('/check-password', 
-  async (req, res, next) => {
+  async (req, res) => {
     try {
       const {dashboardId, password} = req.body;
       // Find the dashboard from the id given, also return and the password of the dashboard
@@ -321,7 +321,7 @@ router.post('/check-password',
 // Route for changing the share status of a dashboard
 router.post('/share-dashboard', 
   authorization,
-  async (req, res, next) => {
+  async (req, res) => {
     try {
       // Find the dashboard with the given id of the user
       const {dashboardId} = req.body;
@@ -351,7 +351,7 @@ router.post('/share-dashboard',
 // Route to change the password of a dashboard
 router.post('/change-password', 
   authorization,
-  async (req, res, next) => {
+  async (req, res) => {
     try {
       // Find the dashboard with the given id of the user
       const {dashboardId, password} = req.body;
