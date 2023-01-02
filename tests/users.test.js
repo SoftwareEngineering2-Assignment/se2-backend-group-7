@@ -55,10 +55,23 @@ test.beforeEach(() => {
     const {body} =await api(`users/create`,{
       method: 'POST',
       json: request,
-
     });
     t.is(body.status,409);
     t.is(body.message,'Registration Error: A user with that e-mail or username already exists.');
+  });
+  
+  test('POST /users create user with valid data - 200 ',async  (t) => {
+    const token = jwtSign({ id: 1 });
+    const api = await t.context.got.extend({
+     responseType:'json',
+    });
+    const body = new User ({username:'new_user', password:'new_password', email:'kostas@gmail.com'});
+    const { statusCode } = await api(`users/create`, {
+      method: 'POST',
+      json: body,
+    }); 
+    console.log(body);
+    t.is(statusCode,200);
   });
 
  
