@@ -46,6 +46,8 @@ test.beforeEach(() => {
   sinon.reset(); 
 });
                //CREATE 
+
+               
   test('POST /users create user that already exists - 409 ',async  (t) => {
     const api = await t.context.got.extend({
      responseType:'json',
@@ -61,7 +63,7 @@ test.beforeEach(() => {
   });
   
   test('POST /users create user with valid data - 200 ',async  (t) => {
-    const token = jwtSign({ id: 1 });
+   
     const api = await t.context.got.extend({
      responseType:'json',
     });
@@ -73,8 +75,34 @@ test.beforeEach(() => {
     console.log(body);
     t.is(statusCode,200);
   });
+  test('POST /users authendicate user, user not found - 401', async (t)=> {
+    const api = await t.context.got.extend({
+      responseType:'json',
+    });
+    const request = new User({username: 'usern',password: '56789'});
+    const {body} = await api(`users/authenticate`,{
+      method:'POST',
+      json: request,
+    });
+    t.is(body.status,401);
+    t.is(body.message, 'Authentication Error: User not found.');
+  });
+   test('POST /users authentication password doesnot match -401',async (t) =>{
+    const api = await t.context.got.extend({
+      responseType:'json',
+    });
 
- 
+    const request = new User({username: 'new_user', password: '5566788'});
+    const{body} = await api(`users/authenticate`,{
+      method: 'POST',
+      json: request,
+    });
+    console.log(body);
+    t.is(body.status,401);
+   // t.is(body.message,'Authentication Error: Password does not match!');
+   })
+  
+  
 
 
   //  const body  = new User({ username:'usernameA'});
@@ -83,6 +111,7 @@ test.beforeEach(() => {
       //json: body,
     //});
     //t.is(statusCode, 409);
+
 
 
 
