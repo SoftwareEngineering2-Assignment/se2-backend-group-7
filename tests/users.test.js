@@ -10,21 +10,13 @@ const got = require('got');
 const listen = require('test-listen');
 
 const Source = require('../src/models/source');
-
-
-
 const app = require('../src/index');
 const User = require('../src/models/user');
 
-//const {comparePassword} = require('../src/utilities/authentication/helpers');
-//const {passwordDigest} = require('../src/utilities/authentication/helpers');
-//const User = require('../src/models/user');
 const { jwtSign } = require('../src/utilities/authentication/helpers');
 
 let user;
 const sinon =  require('sinon');
-
-
 
 test.before(async (t) => {
   t.context.server = http.createServer(app);
@@ -39,48 +31,33 @@ test.before(async (t) => {
   user = await  User.create({
     username: 'user',
     password: 'password',
-    email: 'email',
+    email: 'bill@gmail.com ',
   });
 });
 
-
-
-
 test.after.always((t) => {
   t.context.server.close();
-
   User.findByIdAndDelete(user._id);
-
 });
-est.beforeEach(() => {
+
+test.beforeEach(() => {
   sinon.resetHistory();
-  sinon.restore(); 
+    sinon.restore(); 
   sinon.reset(); 
 });
-
-                 //CREATE 
+               //CREATE 
   test('POST /users create user that already exists - 409 ',async  (t) => {
-    const token = jwtSign({ id: user._id});
-
-    await   User.create({
-        username:'user',
-        password: 'password',
-        email: 'email',
-    });
-
-
     const api = await t.context.got.extend({
      responseType:'json',
     });
 
-    const request = new User({username: 'user'});
-    const {body} =await  api(`users/create-user?token=${token}`,{
+    const request = new User({username: 'user',password:'password',email:'bill@gmail.com '});
+    const {body} =await api(`users/create`,{
       method: 'POST',
       json: request,
 
     });
-
-    //t.is(body.status,409);
+    t.is(body.status,409);
     t.is(body.message,'Registration Error: A user with that e-mail or username already exists.');
   });
 
@@ -97,6 +74,3 @@ est.beforeEach(() => {
 
 
     
-
-  
-
