@@ -102,7 +102,25 @@ test.beforeEach(() => {
    // t.is(body.message,'Authentication Error: Password does not match!');
    })
   
-  
+   test('POST /users reset password -404',async (t) => {
+
+    
+    //const token = jwtSign({ id: user._id });
+    const api = await t.context.got.extend({
+      responseType:'json',
+    })
+
+    const request = new User({username:'new_user' , password:'89887' , email:'kostasPap@gmail.com'});
+    const {body} = await api(`users/resetpassword`,{
+      method: 'POST',
+      json: request,
+    });
+
+    console.log(body);
+    //t.is(body.status,404);
+    t.is(body.message, 'Resource Error : User not found.');
+
+   }); 
 
 
   //  const body  = new User({ username:'usernameA'});
