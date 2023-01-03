@@ -47,8 +47,25 @@ test.beforeEach(() => {
 });
                //CREATE 
 
+ test('POST /users create user with valid data - 200 ',async  (t) => {
+    const token = jwtSign({ id: user._id});
+    const api = await t.context.got.extend({
+     responseType:'json',
+    });
+    let newUser={...user};
+    newUser.id= user._id;
+    const body = new User({username:'new_user', password:'new_password', email:'kostas@gmail.com'});
+    const { statusCode } = await api(`users/create?token=${token}`, {
+      method: 'POST',
+      json: body,
+    }); 
+    console.log(body);
+    t.is(statusCode,200);
+    //t.is(token,newUser.id);
+  });
                
   test('POST /users create user that already exists - 409 ',async  (t) => {
+    
     const api = await t.context.got.extend({
      responseType:'json',
     });
@@ -62,19 +79,7 @@ test.beforeEach(() => {
     t.is(body.message,'Registration Error: A user with that e-mail or username already exists.');
   });
   
-  test('POST /users create user with valid data - 200 ',async  (t) => {
-   
-    const api = await t.context.got.extend({
-     responseType:'json',
-    });
-    const body = new User ({username:'new_user', password:'new_password', email:'kostas@gmail.com'});
-    const { statusCode } = await api(`users/create`, {
-      method: 'POST',
-      json: body,
-    }); 
-    console.log(body);
-    t.is(statusCode,200);
-  });
+  
   test('POST /users authendicate user, user not found - 401', async (t)=> {
     const api = await t.context.got.extend({
       responseType:'json',
@@ -97,18 +102,31 @@ test.beforeEach(() => {
       method: 'POST',
       json: request,
     });
-    console.log(body);
+    //console.log(body);
     t.is(body.status,401);
    // t.is(body.message,'Authentication Error: Password does not match!');
    })
   
-   test('POST /users reset password -404',async (t) => {
+   test('POST /users authentication password is correct -200',async (t) =>{
+   // const token = jwtSign({username:user.username, id: user._id, email:user.email });
+    const token = jwtSign({id:1 });
 
-    
+    const api = await t.context.got.extend({
+      responseType:'json',
+    });
+    const body = new User({username:'new_user', password: 'new_password', email:'kostas@gmail.com'});
+    const{statusCode} = await api(`users/authenticate?token=${token}`,{
+      method:'POST',
+      json: body,
+    });
+    console.log(body);
+    t.is(statusCode, 200); 
+   });
+   test('POST /users reset password -404',async (t) => {
     //const token = jwtSign({ id: user._id });
     const api = await t.context.got.extend({
       responseType:'json',
-    })
+    });
 
     const request = new User({username:'new_user' , password:'89887' , email:'kostasPap@gmail.com'});
     const {body} = await api(`users/resetpassword`,{
@@ -119,7 +137,7 @@ test.beforeEach(() => {
    // console.log(body);
     t.is(body.status,404);
     t.is(body.message, 'Resource Error : User not found.');
-
+      
    }); 
 
    test('POST /users change password -404',async (t) =>{
@@ -133,10 +151,12 @@ test.beforeEach(() => {
       method: 'POST',
       json: request,
     });
-    console.log(body);
+    //console.log(body);
     t.is(body.status,404);
     t.is(body.message, 'Resource Error: User not found.');
    });
+
+
 
 
   //  const body  = new User({ username:'usernameA'});
@@ -145,8 +165,3 @@ test.beforeEach(() => {
       //json: body,
     //});
     //t.is(statusCode, 409);
-
-
-
-
-    
