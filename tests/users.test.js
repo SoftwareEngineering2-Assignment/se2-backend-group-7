@@ -116,11 +116,27 @@ test.beforeEach(() => {
       json: request,
     });
 
-    console.log(body);
-    //t.is(body.status,404);
+   // console.log(body);
+    t.is(body.status,404);
     t.is(body.message, 'Resource Error : User not found.');
 
    }); 
+
+   test('POST /users change password -404',async (t) =>{
+    const token = jwtSign({ id: user._id });
+    const api = await t.context.got.extend ({
+      responseType: 'json',
+    });
+    
+    const request = new User({username:'new_user',password: '12345678',email: 'kostas@gmail.com'});
+    const {body} = await api(`users/changepassword?token=${token}`,{
+      method: 'POST',
+      json: request,
+    });
+    console.log(body);
+    t.is(body.status,404);
+    t.is(body.message, 'Resource Error: User not found.');
+   });
 
 
   //  const body  = new User({ username:'usernameA'});
