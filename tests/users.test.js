@@ -12,6 +12,7 @@ const listen = require('test-listen');
 const Source = require('../src/models/source');
 const app = require('../src/index');
 const User = require('../src/models/user');
+const Reset = require('../src/models/reset');
 
 const { jwtSign } = require('../src/utilities/authentication/helpers');
 
@@ -48,19 +49,20 @@ test.beforeEach(() => {
                //CREATE 
 
  test('POST /users create user with valid data - 200 ',async  (t) => {
-    const token = jwtSign({ id: user._id});
+   // const token = jwtSign({ id: 1});
     const api = await t.context.got.extend({
      responseType:'json',
     });
-    let newUser={...user};
-    newUser.id= user._id;
-    const body = new User({username:'new_user', password:'new_password', email:'kostas@gmail.com'});
-    const { statusCode } = await api(`users/create?token=${token}`, {
+   // let newUser={...user};
+    //newUser.id= user._id;
+    const body = new  User({username:'new_user893', password:'new_password89', email:'kostas89@gmail.com'});
+    const { statusCode } = await api(`users/create`, {
       method: 'POST',
       json: body,
     }); 
     console.log(body);
     t.is(statusCode,200);
+
     //t.is(token,newUser.id);
   });
                
@@ -156,8 +158,60 @@ test.beforeEach(() => {
     t.is(body.message, 'Resource Error: User not found.');
    });
 
+   test('POST /user reset token -404',async(t)=>{
+    const token = jwtSign({ id: 1});
+      const api = await t.context.got.extend({
+        responseType:'json',
+      });
+      const request = new User({username:'new_user5',password: '123456785',email: 'kostas5@gmail.com'});
+      const {body} = await api(`users/changepassword?token=${token}`,{
+        method: 'POST',
+        json: request,
+      });
+      console.log(body);
+      t.is(body.status,404);
+     // t.is(body.message, ' Resource Error: Reset token has expired.')
+    });
+   /*  test('POST /user reset token -410',async(t)=>{
+      const token = jwtSign({id:id._id});
+      const d = new Date("2016-03-25");
+     
+        const api = await t.context.got.extend({
+          responseType:'json',
+        });
+        
+        const request = new Reset({username:'new_user',token: token ,expireAt:d});
+        const {body,statusCode} = await api(`users/changepassword?token=${token}`,{
+          method:'GET',
+          json:request,
+        });
+      
+        console.log(body);
+        t.is(statusCode,410);
+       // t.is(body.message, ' Resource Error: Reset token has expired.')
 
-   
+   })*/
+
+   test('POST /users changepssword  is correct -200',async (t) =>{
+    // const token = jwtSign({username:user.username, id: user._id, email:user.email });
+     const token = jwtSign({id:user._id });
+ 
+     const api = await t.context.got.extend({
+       responseType:'json',
+     });
+     const body = new User({username:'new_user58', password: '12345678', email:'kostas58@gmail.com'});
+     const{statusCode} = await api(`users/changepassword?token=${token}`,{
+       method:'POST',
+       json: body,
+     });
+     console.log(body);
+     t.is(statusCode, 200);
+    // t.is(body.message, 'Password was changed.'); 
+    });
+
+
+
+
   //  const body  = new User({ username:'usernameA'});
    // const { statusCode } = await api (`users/create-users?token=${token}`,{
      // method: 'POST',
