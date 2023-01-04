@@ -204,6 +204,7 @@ test.beforeEach(() => {
        method:'POST',
        json: body,
      });
+     
      console.log(body);
      t.is(statusCode, 200);
     // t.is(body.message, 'Password was changed.'); 
