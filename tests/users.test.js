@@ -199,4 +199,27 @@ test('POST /users changepassword  user does not exist', async (t) => {
 // });
 // t.is(statusCode, 409);
 
+test('POST /users changepassword with reset scema and return -410', async (t) => {
+  const token = jwtSign({username: user.username});
+  const api = await t.context.got.extend({responseType: 'json'});
+  const request = {password: 'new_password'};
+  // Drop reset schema in order to be null and fake the expiration
+  await Reset.findOneAndRemove({username: user.username});
+
+  const {body} = await api(`users/changepassword?token=${token}`, {
+    method: 'POST',
+    json: request,
+  });
+ 
+  t.is(body.status, 410);
+  t.is(body.message, 'Resource Error: Reset token has expired.'); 
+
+
+  
+  // Recreating the reset schema of the user
+  await new Reset({
+    username: user.username,
+    token,
+  }).save();
+});    
 
