@@ -15,8 +15,8 @@ router.post('/create',
     const {username, password, email} = req.body;
     try {
       // eslint-disable-next-line no-shadow, no-use-before-define
-      const User = await User.findOne({$or: [{username}, {email}]});
-      if (User) {
+      const user = await User.findOne({$or: [{username}, {email}]});
+      if (user) {
         return res.json({
           status: 409,
           message: 'Registration Error: A user with that e-mail or username already exists.'
@@ -112,7 +112,7 @@ router.post('/changepassword',
       if (!reset) {
         return res.json({
           status: 410,
-          message: ' Resource Error: Reset token has expired.'
+          message: 'Resource Error:Reset token has expired.'
         });
       }
       user.password = password;
