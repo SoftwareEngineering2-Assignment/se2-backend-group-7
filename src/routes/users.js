@@ -4,11 +4,8 @@ const express = require('express');
 const {validation, authorization} = require('../middlewares');
 const {helpers: {jwtSign}} = require('../utilities/authentication');
 
-//const {mailer: {mail, send}} = require('../utilities');
-
-
+ // const {mailer: {mail, send}} = require('../utilities');
 const router = express.Router();
-
 const User = require('../models/user');
 const Reset = require('../models/reset');
 
@@ -17,7 +14,7 @@ router.post('/create',
   async (req, res, next) => {
     const {username, password, email} = req.body;
     try {
-      const user = await User.findOne({$or: [{username}, {email}]});
+      const User = await User.findOne({$or: [{username}, {email}]});
       if (user) {
         return res.json({
           status: 409,
@@ -88,10 +85,10 @@ router.post('/resetpassword',
      // const email = mail(token);
     //  send(user.email, 'Forgot Password', email);
       return res.json({
-       ok: true,
+        ok: true,
         message: 'Forgot password e-mail sent.'
       });
-    } catch (error) {
+     } catch (error) {
       return next(error);
     }
   });
@@ -127,6 +124,4 @@ router.post('/changepassword',
       return next(error);
     }
   });
-
 module.exports = router;
-
