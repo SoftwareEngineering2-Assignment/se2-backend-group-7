@@ -1,7 +1,3 @@
-    /* eslint-disable import/no-unresolved */
-require('dotenv').config();
-
-// const {env} = require('../src/tests/.env');
 const http = require('node:http');
 const test = require('ava').serial;
 const got = require('got');
@@ -212,7 +208,7 @@ test('POST /users changepassword with reset scema and return -410', async (t) =>
   });
  
   t.is(body.status, 410);
-  t.is(body.message, 'Resource Error: Reset token has expired.'); 
+  t.is(body.message,'Resource Error:Reset token has expired.'); 
 
 
   
@@ -222,4 +218,3 @@ test('POST /users changepassword with reset scema and return -410', async (t) =>
     token,
   }).save();
 });    
-
