@@ -14,8 +14,9 @@ router.post('/create',
   async (req, res, next) => {
     const {username, password, email} = req.body;
     try {
+      // eslint-disable-next-line no-shadow, no-use-before-define
       const User = await User.findOne({$or: [{username}, {email}]});
-      if (user) {
+      if (User) {
         return res.json({
           status: 409,
           message: 'Registration Error: A user with that e-mail or username already exists.'
@@ -82,16 +83,16 @@ router.post('/resetpassword',
         token,
       }).save();
 
-     // const email = mail(token);
-    //  send(user.email, 'Forgot Password', email);
+      // const email = mail(token);
+      //  send(user.email, 'Forgot Password', email);
       return res.json({
         ok: true,
         message: 'Forgot password e-mail sent.'
       });
-   } catch (error) {
+    } catch (error) {
       return next(error);
-   }
- });
+    }
+  });
 
 router.post('/changepassword',
   (req, res, next) => validation(req, res, next, 'change'),
