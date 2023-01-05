@@ -2,8 +2,10 @@ const express = require('express');
 const {validation, authorization} = require('../middlewares');
 const {helpers: {jwtSign}} = require('../utilities/authentication');
 
- // const {mailer: {mail, send}} = require('../utilities');
+// const {mailer: {mail, send}} = require('../utilities');
+
 const router = express.Router();
+
 const User = require('../models/user');
 const Reset = require('../models/reset');
 
@@ -86,11 +88,10 @@ router.post('/resetpassword',
         ok: true,
         message: 'Forgot password e-mail sent.'
       });
-       }
-      catch (error) {
+   } catch (error) {
       return next(error);
-       }
-  });
+   }
+ });
 
 router.post('/changepassword',
   (req, res, next) => validation(req, res, next, 'change'),
