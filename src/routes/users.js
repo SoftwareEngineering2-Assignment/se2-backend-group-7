@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const express = require('express');
 const {validation, authorization} = require('../middlewares');
 const {helpers: {jwtSign}} = require('../utilities/authentication');
@@ -83,10 +84,9 @@ router.post('/resetpassword',
         username,
         token,
       }).save();
-
-      const email = mail(token);
-    // Comment out send email
-     // send(user.email, 'Forgot Password', email);
+      // Comment out send email
+      // const email = mail(token);
+      // send(user.email, 'Forgot Password', email);
       return res.json({
         ok: true,
         message: 'Forgot password e-mail sent.'
