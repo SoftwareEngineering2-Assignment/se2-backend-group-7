@@ -76,14 +76,17 @@ router.post('/resetpassword',
         });
       }
       const token = jwtSign({username});
+     
       await Reset.findOneAndRemove({username});
+      
       await new Reset({
         username,
         token,
       }).save();
 
       const email = mail(token);
-      send(user.email, 'Forgot Password', email);
+    // Comment out send email
+     // send(user.email, 'Forgot Password', email);
       return res.json({
         ok: true,
         message: 'Forgot password e-mail sent.'
@@ -99,6 +102,7 @@ router.post('/changepassword',
   async (req, res, next) => {
     const {password} = req.body;
     const {username} = req.decoded;
+    
     try {
       const user = await User.findOne({username});
       if (!user) {
@@ -107,11 +111,13 @@ router.post('/changepassword',
           message: 'Resource Error: User not found.'
         });
       }
+   
       const reset = await Reset.findOneAndRemove({username});
+      
       if (!reset) {
         return res.json({
           status: 410,
-          message: ' Resource Error: Reset token has expired.'
+          message: 'Resource Error: Reset token has expired.'
         });
       }
       user.password = password;
