@@ -1,6 +1,4 @@
-
 const express = require('express');
-
 const {validation, authorization} = require('../middlewares');
 const {helpers: {jwtSign}} = require('../utilities/authentication');
 
@@ -88,9 +86,10 @@ router.post('/resetpassword',
         ok: true,
         message: 'Forgot password e-mail sent.'
       });
-     } catch (error) {
+       }
+      catch (error) {
       return next(error);
-    }
+       }
   });
 
 router.post('/changepassword',
