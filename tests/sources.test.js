@@ -1,5 +1,5 @@
 /* eslint-disable import/no-unresolved */
-/* require('dotenv').config();
+require('dotenv').config();
 
 const http = require('node:http');
 const test = require('ava').serial;
@@ -395,4 +395,4 @@ test('POST /check-source returns correct status code and response when source ex
   // Assert that the status code of the response is 200
   t.is(statusCode, 200);
 });
- */
+ 
