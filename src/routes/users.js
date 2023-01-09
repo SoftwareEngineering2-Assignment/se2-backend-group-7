@@ -1,7 +1,8 @@
 const express = require('express');
 const {validation, authorization} = require('../middlewares');
 const {helpers: {jwtSign}} = require('../utilities/authentication');
-const {mailer: {mail, send}} = require('../utilities');
+// Sendgrid is disabled
+// const {mailer: {mail, send}} = require('../utilities');
 
 const router = express.Router();
 
@@ -85,9 +86,10 @@ router.post('/resetpassword',
         username,
         token,
       }).save();
-
-      const email = mail(token);
-      send(user.email, 'Forgot Password', email);
+      
+      // Sendgrid is disabled
+      // const email = mail(token);
+      // send(user.email, 'Forgot Password', email);
       return res.json({
         ok: true,
         message: 'Forgot password e-mail sent.'
