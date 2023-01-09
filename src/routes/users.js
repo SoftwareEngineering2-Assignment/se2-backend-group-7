@@ -1,8 +1,7 @@
 const express = require('express');
 const {validation, authorization} = require('../middlewares');
 const {helpers: {jwtSign}} = require('../utilities/authentication');
-
-// const {mailer: {mail, send}} = require('../utilities');
+const {mailer: {mail, send}} = require('../utilities');
 
 const router = express.Router();
 
@@ -27,6 +26,7 @@ router.post('/create',
         password,
         email
       }).save();
+      
       return res.json({success: true, id: newUser._id});
     } catch (error) {
       return next(error);
@@ -51,6 +51,7 @@ router.post('/authenticate',
           message: 'Authentication Error: Password does not match!'
         });
       }
+     
       return res.json({
         user: {
           username, 
@@ -70,6 +71,7 @@ router.post('/resetpassword',
     const {username} = req.body;
     try {
       const user = await User.findOne({username});
+      
       if (!user) {
         return res.json({
           status: 404,
@@ -77,14 +79,15 @@ router.post('/resetpassword',
         });
       }
       const token = jwtSign({username});
+      
       await Reset.findOneAndRemove({username});
       await new Reset({
         username,
         token,
       }).save();
 
-      // const email = mail(token);
-      //  send(user.email, 'Forgot Password', email);
+      const email = mail(token);
+      send(user.email, 'Forgot Password', email);
       return res.json({
         ok: true,
         message: 'Forgot password e-mail sent.'
