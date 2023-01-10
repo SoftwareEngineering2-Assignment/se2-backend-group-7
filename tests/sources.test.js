@@ -5,12 +5,13 @@ const http = require('node:http');
 const test = require('ava').serial;
 const got = require('got');
 const listen = require('test-listen');
+const sinon = require('sinon');
 const Source = require('../src/models/source');
 const app = require('../src/index');
 const User = require('../src/models/user');
-const { jwtSign } = require('../src/utilities/authentication/helpers');
+const {jwtSign} = require('../src/utilities/authentication/helpers');
+
 let user;
-const sinon = require('sinon');
 
 test.before(async (t) => {
   t.context.server = http.createServer(app);
@@ -41,7 +42,7 @@ test.beforeEach(() => {
 
 test('GET /sources returns error when ecountering error', async (t) => {
   // Create a JWT with the user's ID
-  const token = jwtSign({ id: user._id });
+  const token = jwtSign({id: user._id});
   // Create a new source
   await Source.create({
     name: 'name',
@@ -56,46 +57,44 @@ test('GET /sources returns error when ecountering error', async (t) => {
     .stub(Source, 'find')
     .throws(new Error('Something went wrong'));
   // Send a GET request to the /sources route with the token as a query parameter
-  const { statusCode } = await t.context.got(`sources/sources?token=${token}`);
+  const {statusCode} = await t.context.got(`sources/sources?token=${token}`);
   // Assert that the status code of the response is 404
   t.is(statusCode, 404);
 
   findStub.restore();
 });
 test('GET /sources returns sources when provided a valid token', async (t) => {
-    sinon.resetHistory();
-    // Create a JWT with the user's ID
-    const token = jwtSign({ id: user._id });
-    // Create a new source
-    await Source.create({
-      name: 'name',
-      type: 'type',
-      url: 'url',
-      login: 'login',
-      passcode: '',
-      vhost: '',
-      owner: user._id,
-    });
-    // Send a GET request to the /sources route with the token as a query parameter
-    const { statusCode } = await t.context.got(`sources/sources?token=${token}`);
-    // Assert that the status code of the response is 200
-    t.is(statusCode, 200);
+  sinon.resetHistory();
+  // Create a JWT with the user's ID
+  const token = jwtSign({id: user._id});
+  // Create a new source
+  await Source.create({
+    name: 'name',
+    type: 'type',
+    url: 'url',
+    login: 'login',
+    passcode: '',
+    vhost: '',
+    owner: user._id,
   });
+  // Send a GET request to the /sources route with the token as a query parameter
+  const {statusCode} = await t.context.got(`sources/sources?token=${token}`);
+  // Assert that the status code of the response is 200
+  t.is(statusCode, 200);
+});
 // CREATE SOURCE
 test('POST /create-source with valid data and token returns status code 200', async (t) => {
   // Generate a valid JWT token
-  const token = jwtSign({ id: 1 });
+  const token = jwtSign({id: 1});
 
   // Initialize the API object with JSON response type
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json',});
 
   // Create the request body
-  const body = new Source({ name: 'Name' });
+  const body = new Source({name: 'Name'});
 
   // Make the POST request to the /create-source endpoint
-  const { statusCode } = await api(`sources/create-source?token=${token}`, {
+  const {statusCode} = await api(`sources/create-source?token=${token}`, {
     method: 'POST',
     json: body,
   });
@@ -106,7 +105,7 @@ test('POST /create-source with valid data and token returns status code 200', as
 
 test('POST /create-source with duplicate name and valid token returns status code 409', async (t) => {
   // Generate a valid JWT token
-  const token = jwtSign({ id: user._id });
+  const token = jwtSign({id: user._id});
 
   // Create a source with the name "name1"
   await Source.create({
@@ -120,15 +119,13 @@ test('POST /create-source with duplicate name and valid token returns status cod
   });
 
   // Initialize the API object with JSON response type
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json'});
 
   // Create the request body with the name "name1"
-  const request = new Source({ name: 'name1' });
+  const request = new Source({name: 'name1'});
 
   // Make the POST request to the /create-source endpoint
-  const { body } = await api(`sources/create-source?token=${token}`, {
+  const {body} = await api(`sources/create-source?token=${token}`, {
     method: 'POST',
     json: request,
   });
@@ -142,15 +139,13 @@ test('POST /create-source with invalid token returns status code 403', async (t)
   const token = '123';
 
   // Initialize the API object with JSON response type
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json',});
 
   // Create the request body
-  const body = new Source({ name: 'Name' });
+  const body = new Source({name: 'Name'});
 
   // Make the POST request to the /create-source endpoint
-  const { statusCode } = await api(`sources/create-source?token=${token}`, {
+  const {statusCode} = await api(`sources/create-source?token=${token}`, {
     method: 'POST',
     json: body,
   });
@@ -161,7 +156,7 @@ test('POST /create-source with invalid token returns status code 403', async (t)
 // CHNAGE SOURCE
 test('POST /change-source returns correct response and status code for valid request and token', async (t) => {
   // Generate a JWT token for the user
-  const token = jwtSign({ id: user._id });
+  const token = jwtSign({id: user._id});
 
   // Create a new source for the user
   const createdSource = await Source.create({
@@ -175,9 +170,7 @@ test('POST /change-source returns correct response and status code for valid req
   });
 
   // Initialize the API client
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json',});
 
   // Build the request body
   const request = {
@@ -191,7 +184,7 @@ test('POST /change-source returns correct response and status code for valid req
   };
 
   // Make the POST request to change the source
-  const { statusCode } = await api(`sources/change-source?token=${token}`, {
+  const {statusCode} = await api(`sources/change-source?token=${token}`, {
     method: 'POST',
     json: request,
   });
@@ -201,7 +194,7 @@ test('POST /change-source returns correct response and status code for valid req
 });
 
 test('POST /change-source returns correct response and status code for duplicate name', async (t) => {
-  const token = jwtSign({ id: user._id });
+  const token = jwtSign({id: user._id});
   const createdSource = await Source.create({
     name: 'name',
     type: 'type',
@@ -220,9 +213,7 @@ test('POST /change-source returns correct response and status code for duplicate
     vhost: '',
     owner: user._id,
   });
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json',});
 
   const request = {
     id: createdSource._id,
@@ -233,7 +224,7 @@ test('POST /change-source returns correct response and status code for duplicate
     passcode: '',
     vhost: '',
   };
-  const { body } = await api(`sources/change-source?token=${token}`, {
+  const {body} = await api(`sources/change-source?token=${token}`, {
     method: 'POST',
     json: request,
   });
@@ -241,11 +232,9 @@ test('POST /change-source returns correct response and status code for duplicate
 });
 test('POST /change-source returns correct response and status when source does not exist', async (t) => {
   // Generate a JWT for an authenticated user
-  const token = jwtSign({ id: user._id });
+  const token = jwtSign({id: user._id});
   // Create an extended Got instance with the 'json' responseType
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json',});
 
   // Construct the request payload
   const request = {
@@ -258,7 +247,7 @@ test('POST /change-source returns correct response and status when source does n
     vhost: '',
   };
   // Make the POST request to the /change-source endpoint with the request payload and JWT
-  const { body } = await api(`sources/change-source?token=${token}`, {
+  const {body} = await api(`sources/change-source?token=${token}`, {
     method: 'POST',
     json: request,
   });
@@ -270,13 +259,11 @@ test('POST /change-source with invalid token returns 403', async (t) => {
   // Create an invalid JWT
   const token = '123';
   // Create an instance of the `got` library with JSON response type
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json',});
   // Create a request body with the source name to change
-  const body = new Source({ name: 'Name' });
+  const body = new Source({name: 'Name'});
   // Send a POST request to the /change-source route with the token as a query parameter and the request body
-  const { statusCode } = await api(`sources/change-source?token=${token}`, {
+  const {statusCode} = await api(`sources/change-source?token=${token}`, {
     method: 'POST',
     json: body,
   });
@@ -286,7 +273,7 @@ test('POST /change-source with invalid token returns 403', async (t) => {
 // DELETE SOURCE
 test('POST /delete-source returns correct status code and response when provided a valid token', async (t) => {
   // Create a JWT with the user's ID
-  const token = jwtSign({ id: user._id });
+  const token = jwtSign({id: user._id});
   // Create a new source
   await Source.create({
     name: 'name',
@@ -298,14 +285,12 @@ test('POST /delete-source returns correct status code and response when provided
     owner: user._id,
   });
   // Create an instance of the `got` library with JSON response type
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json',});
 
   // Create a request body with the source ID to delete
-  const body = { id: 0 };
+  const body = {id: 0};
   // Send a POST request to the /delete-source route with the token as a query parameter and the request body
-  const { statusCode } = await api(`sources/delete-source?token=${token}`, {
+  const {statusCode} = await api(`sources/delete-source?token=${token}`, {
     method: 'POST',
     json: body,
   });
@@ -317,14 +302,12 @@ test('POST /delete-source returns status code 403 when provided an invalid token
   // Create an invalid JWT
   const token = '123';
   // Create an instance of the `got` library with JSON response type
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json',});
 
   // Create a request body with the source ID to delete
-  const body = { id: 1 };
+  const body = {id: 1};
   // Send a POST request to the /delete-source route with the token as a query parameter and the request body
-  const { statusCode } = await api(`sources/delete-source?token=${token}`, {
+  const {statusCode} = await api(`sources/delete-source?token=${token}`, {
     method: 'POST',
     json: body,
   });
@@ -344,16 +327,14 @@ test('POST /source returns correct status code and response when source exists',
     owner: user._id,
   });
   // Create an instance of the `got` library with JSON response type
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json',});
   // Create a copy of the user object with the ID field renamed to match the request body format
-  let requestedUser = { ...user };
+  const requestedUser = {...user};
   requestedUser.id = user._id;
   // Create the request body with the source name and user information
-  const body = { name: 'name', owner: 'self', user: requestedUser };
+  const body = {name: 'name', owner: 'self', user: requestedUser};
   // Send a POST request to the /source route with the request body
-  const { statusCode } = await api(`sources/source`, {
+  const {statusCode} = await api('sources/source', {
     method: 'POST',
     json: body,
   });
@@ -373,16 +354,14 @@ test('POST /source returns correct status code and response when source does not
     owner: user._id,
   });
   // Create an instance of the `got` library with JSON response type
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json',});
   // Create a copy of the user object with the ID field renamed to match the request body format
-  let requestedUser = { ...user };
+  const requestedUser = {...user};
   requestedUser.id = user._id;
   // Create the request body with a source name that does not exist and the user information
-  const request = { name: 'name999', owner: 'self', user: requestedUser };
+  const request = {name: 'name999', owner: 'self', user: requestedUser};
   // Send a POST request to the /source route with the request body
-  const { body } = await api(`sources/source`, {
+  const {body} = await api('sources/source', {
     method: 'POST',
     json: request,
   });
@@ -392,7 +371,7 @@ test('POST /source returns correct status code and response when source does not
 // CHECK SOURCE
 test('POST /check-source returns correct status code and response when source exists', async (t) => {
   // Create a JWT with the user's ID
-  const token = jwtSign({ id: user._id });
+  const token = jwtSign({id: user._id});
 
   // Create a new source
   await Source.create({
@@ -405,16 +384,15 @@ test('POST /check-source returns correct status code and response when source ex
     owner: user._id,
   });
   // Create an instance of the `got` library with JSON response type
-  const api = await t.context.got.extend({
-    responseType: 'json',
-  });
+  const api = await t.context.got.extend({responseType: 'json',});
   // Create the request body with the source names
   const body = ['source1', 'source2', 'source3'];
   // Send a POST request to the /source route with the request body
-  const { statusCode } = await api(`sources/check-sources?token=${token}`, {
+  const {statusCode} = await api(`sources/check-sources?token=${token}`, {
     method: 'POST',
     json: body,
   });
   // Assert that the status code of the response is 200
   t.is(statusCode, 200);
 });
+ 
