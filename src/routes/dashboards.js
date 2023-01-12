@@ -38,7 +38,7 @@ router.get('/dashboards',
 // Route POST for creating a new dasboard. 
 router.post('/create-dashboard', 
   authorization,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       // Check if the user already has a dashboard with that name.
       const {name} = req.body;
@@ -46,7 +46,10 @@ router.post('/create-dashboard',
       const foundDashboard = await Dashboard.findOne({owner: mongoose.Types.ObjectId(id), name});
       // If yes, inform them by throwing an error.
       if (foundDashboard) {
-        throw new Error('A dashboard with that name already exists.');
+        return res.json({
+          status: 409,
+          message: 'A dashboard with that name already exists.'
+        }); 
       }
       // If no, create an empty dashboard for the user with the name given
       await new Dashboard({
@@ -60,47 +63,47 @@ router.post('/create-dashboard',
       return res.json({success: true});
       // Catch the error and return a json file with status code and the message of error.
     } catch (err) {
-      return res.json({
-        status: 409,
-        message: err.message
-      }); 
+      return next(err.body);  
     }
   }); 
 
 // Route for deleting a dashboard
 router.post('/delete-dashboard', 
   authorization,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       // Find and remove the requested dashboard for the user if dashboard exists.
       const {id} = req.body;
       const foundDashboard = await Dashboard.findOneAndRemove({_id: mongoose.Types.ObjectId(id), owner: mongoose.Types.ObjectId(req.decoded.id)});
       // If doesn't exist throw an error.
       if (!foundDashboard) {
-        throw new Error('The selected dashboard has not been found.');
+        return res.json({
+          status: 409,
+          message: 'The selected dashboard has not been found.'
+        }); 
       }
       // Return a success flag.
       return res.json({success: true});
       // Catch the error and return a json file with status code and the message of error.
     } catch (err) {
-      return res.json({
-        status: 409,
-        message: err.message
-      }); 
+      return next(err.boy);
     }
   }); 
 
 // Route for getting all info for a dashboard.
 router.get('/dashboard',
   authorization,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       // Find the dashboard with the id given as a query.
       const {id} = req.query;
       const foundDashboard = await Dashboard.findOne({_id: mongoose.Types.ObjectId(id), owner: mongoose.Types.ObjectId(req.decoded.id)});
       // If doesn't exist throw an error.
       if (!foundDashboard) {
-        throw new Error('The selected dashboard has not been found.');
+        return res.json({
+          status: 409,
+          message: 'The selected dashboard has not been found.'
+        });
       }
       // Create a variable with the info we need for the dashboard.
       const dashboard = {};
@@ -125,17 +128,14 @@ router.get('/dashboard',
       });
       // Catch the error and return a json file with status code and the message of error.
     } catch (err) {
-      return res.json({
-        status: 409,
-        message: err.message
-      }); 
+      return next(err.body); 
     }
   });
 
 // Route to save changes on a dashboard. 
 router.post('/save-dashboard', 
   authorization,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       // Find and update the dashboard with the given id with new layout, items and nextId
       const {id, layout, items, nextId} = req.body;
@@ -148,30 +148,33 @@ router.post('/save-dashboard',
       }, {new: true});
       // If dashboard doesn't exist throw an error.
       if (result === null) {
-        throw new Error('The selected dashboard has not been found.');
+        return res.json({
+          status: 409,
+          message: 'The selected dashboard has not been found.'
+        });
       }
       // Return that the update was successful
       return res.json({success: true});
       // Catch the error and return a json file with status code and the message of error.
     } catch (err) {
-      return res.json({
-        status: 409,
-        message: err.message,
-      });
+      return next(err.body);
     }
   }); 
 
 // Route for cloning a dashboard.
 router.post('/clone-dashboard', 
   authorization,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const {dashboardId, name} = req.body;
       // Search if the user already have a dashboard with the same name.
       const foundDashboard = await Dashboard.findOne({owner: mongoose.Types.ObjectId(req.decoded.id), name});
       // If yes, throw an error.
       if (foundDashboard) {
-        throw new Error('A dashboard with that name already exists.');
+        return res.json({
+          status: 409,
+          message: 'A dashboard with that name already exists.'
+        });
       }
       // Find the dashboard to clone with the id given.
       const oldDashboard = await Dashboard.findOne({_id: mongoose.Types.ObjectId(dashboardId), owner: mongoose.Types.ObjectId(req.decoded.id)});
@@ -187,10 +190,7 @@ router.post('/clone-dashboard',
       return res.json({success: true});
       // Catch the error and return a json file with status code and the message of error.
     } catch (err) {
-      return res.json({
-        status: 409,
-        message: err.message,
-      });
+      return next(err.body);
     }
   }); 
 
@@ -203,7 +203,7 @@ router.post('/clone-dashboard',
  Only in case a, c the user is able to view the dashboard 
  */
 router.post('/check-password-needed', 
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const {user, dashboardId} = req.body;
       const userId = user._id;
@@ -211,7 +211,10 @@ router.post('/check-password-needed',
       const foundDashboard = await Dashboard.findOne({_id: mongoose.Types.ObjectId(dashboardId)}).select('+password');
       // If doesn't exist trhow an error.
       if (!foundDashboard) {
-        throw new Error('The specified dashboard has not been found.');
+        return res.json({
+          status: 409,
+          message: 'The specified dashboard has not been found.'
+        });
       }
       // Take the info we need about the dashboard(name, layout, items).
       const dashboard = {};
@@ -267,16 +270,13 @@ router.post('/check-password-needed',
       });
       // Catch the error and return a json file with status code and the message of error.
     } catch (err) {
-      return res.json({
-        status: 409,
-        message: err.message,
-      });
+      return next(err.body);
     }
   }); 
 
 // Route for checking if the password provided for the dashboard is correct.
 router.post('/check-password', 
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const {dashboardId, password} = req.body;
       // Find the dashboard from the id given, also return and the password of the dashboard
@@ -284,7 +284,10 @@ router.post('/check-password',
 
       // If doesn't exist  throw an error.
       if (!foundDashboard) {
-        throw new Error('The specified dashboard has not been found.');
+        return res.json({
+          status: 409,
+          message: 'The specified dashboard has not been found.'
+        });
       }
       // If the password is wrong return a json file with true success flag and a flag that indicates that the password is wrong.
       if (!foundDashboard.comparePassword(password, foundDashboard.password)) {
@@ -311,17 +314,14 @@ router.post('/check-password',
       });
       // Catch the error and return a json file with status code and the message of error.
     } catch (err) {
-      return res.json({
-        status: 409,
-        message: err.message,
-      });
+      return next(err.body);
     }
   }); 
 
 // Route for changing the share status of a dashboard
 router.post('/share-dashboard', 
   authorization,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       // Find the dashboard with the given id of the user
       const {dashboardId} = req.body;
@@ -329,7 +329,10 @@ router.post('/share-dashboard',
       const foundDashboard = await Dashboard.findOne({_id: mongoose.Types.ObjectId(dashboardId), owner: mongoose.Types.ObjectId(id)});
       // If doesn't exist  throw an error.
       if (!foundDashboard) {
-        throw new Error('The specified dashboard has not been found.');
+        return res.json({
+          status: 409,
+          message: 'The specified dashboard has not been found.'
+        });
       }
       // Change the share status of the dashboard (true -> false, false -> true)
       foundDashboard.shared = !(foundDashboard.shared);
@@ -341,17 +344,14 @@ router.post('/share-dashboard',
       });
       // Catch the error and return a json file with status code and the message of error.
     } catch (err) {
-      return res.json({
-        status: 409,
-        message: err.message,
-      });
+      return next(err.body);
     }
   }); 
 
 // Route to change the password of a dashboard
 router.post('/change-password', 
   authorization,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       // Find the dashboard with the given id of the user
       const {dashboardId, password} = req.body;
@@ -359,7 +359,10 @@ router.post('/change-password',
       const foundDashboard = await Dashboard.findOne({_id: mongoose.Types.ObjectId(dashboardId), owner: mongoose.Types.ObjectId(id)});
       // If doesn't exist  throw an error.
       if (!foundDashboard) {
-        throw new Error('The specified dashboard has not been found.');
+        return res.json({
+          status: 409,
+          message: 'The specified dashboard has not been found.'
+        });
       }
       // Change the password.
       foundDashboard.password = password;
@@ -368,10 +371,7 @@ router.post('/change-password',
       return res.json({success: true});
       // Catch the error and return a json file with status code and the message of error.
     } catch (err) {
-      return res.json({
-        status: 409,
-        message: err.message,
-      });
+      return next(err.body);
     }
   }); 
 

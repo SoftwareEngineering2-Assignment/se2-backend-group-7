@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 const express = require('express');
 const mongoose = require('mongoose');
-const { authorization } = require('../middlewares');
+const {authorization} = require('../middlewares');
 
 const router = express.Router();
 
@@ -9,10 +9,8 @@ const Source = require('../models/source');
 
 router.get('/sources', authorization, async (req, res, next) => {
   try {
-    const { id } = req.decoded;
-    const foundSources = await Source.find({
-      owner: mongoose.Types.ObjectId(id),
-    });
+    const {id} = req.decoded;
+    const foundSources = await Source.find({owner: mongoose.Types.ObjectId(id)});
     const sources = [];
     foundSources.forEach((s) => {
       sources.push({
@@ -36,16 +34,19 @@ router.get('/sources', authorization, async (req, res, next) => {
   }
 });
 
-router.post('/create-source', authorization, async (req, res) => {
+router.post('/create-source', authorization, async (req, res, next) => {
   try {
-    const { name, type, url, login, passcode, vhost } = req.body;
-    const { id } = req.decoded;
+    const {name, type, url, login, passcode, vhost} = req.body;
+    const {id} = req.decoded;
     const foundSource = await Source.findOne({
       owner: mongoose.Types.ObjectId(id),
       name,
     });
     if (foundSource) {
-      throw new Error('A source with that name already exists.');
+      return res.json({
+        status: 409,
+        message: 'A source with that name already exists.'
+      });
     }
     await new Source({
       name,
@@ -57,32 +58,35 @@ router.post('/create-source', authorization, async (req, res) => {
       owner: mongoose.Types.ObjectId(id),
     }).save();
 
-    return res.json({ success: true });
+    return res.json({success: true});
   } catch (err) {
-    return res.json({
-      status: 409,
-      message: err.body,
-    });
+    return next(err.body);
   }
 });
 
-router.post('/change-source', authorization, async (req, res) => {
+router.post('/change-source', authorization, async (req, res, next) => {
   try {
-    const { id, name, type, url, login, passcode, vhost } = req.body;
+    const {id, name, type, url, login, passcode, vhost} = req.body;
     const foundSource = await Source.findOne({
       _id: mongoose.Types.ObjectId(id),
       owner: mongoose.Types.ObjectId(req.decoded.id),
     });
     if (!foundSource) {
-      throw new Error('The selected source has not been found.');
+      return res.json({
+        status: 409,
+        message: 'The selected source has not been found.'
+      });
     }
     const sameNameSources = await Source.findOne({
-      _id: { $ne: mongoose.Types.ObjectId(id) },
+      _id: {$ne: mongoose.Types.ObjectId(id)},
       owner: mongoose.Types.ObjectId(req.decoded.id),
       name,
     });
     if (sameNameSources) {
-      throw new Error('A source with the same name has been found.');
+      return res.json({
+        status: 409,
+        message: 'A source with the same name has been found.'
+      });
     }
 
     foundSource.name = name;
@@ -93,45 +97,45 @@ router.post('/change-source', authorization, async (req, res) => {
     foundSource.vhost = vhost;
     await foundSource.save();
 
-    return res.json({ success: true });
+    return res.json({success: true});
   } catch (err) {
-    return res.json({
-      status: 409,
-      message: err.body,
-    });
+    return next(err.body);
   }
 });
 
-router.post('/delete-source', authorization, async (req, res) => {
+router.post('/delete-source', authorization, async (req, res, next) => {
   try {
-    const { id } = req.body;
+    const {id} = req.body;
 
     const foundSource = await Source.findOneAndRemove({
       _id: mongoose.Types.ObjectId(id),
       owner: mongoose.Types.ObjectId(req.decoded.id),
     });
     if (!foundSource) {
-      throw new Error('The selected source has not been found.');
+      return res.json({
+        status: 409,
+        message: 'The selected source has not been found.'
+      });
     }
-    return res.json({ success: true });
+    return res.json({success: true});
   } catch (err) {
-    return res.json({
-      status: 409,
-      message: err.body,
-    });
+    return next(err.body);
   }
 });
 
-router.post('/source', async (req, res) => {
+router.post('/source', async (req, res, next) => {
   try {
-    const { name, owner, user } = req.body;
+    const {name, owner, user} = req.body;
     const userId = owner === 'self' ? user.id : owner;
     const foundSource = await Source.findOne({
       name,
       owner: mongoose.Types.ObjectId(userId),
     });
     if (!foundSource) {
-      throw new Error('The selected source has not been found.');
+      return res.json({
+        status: 409,
+        message: 'The selected source has not been found.'
+      });
     }
 
     const source = {};
@@ -146,18 +150,14 @@ router.post('/source', async (req, res) => {
       source,
     });
   } catch (err) {
-    return res.json({
-      status: 409,
-      message: err.body,
-    });
+    return next(err.body);
   }
 });
 
-router.post('/check-sources', authorization, async (req, res) => {
+router.post('/check-sources', authorization, async (req, res, next) => {
   try {
-    const { sources } = req.body;
-    const { id } = req.decoded;
-
+    const {sources} = req.body;
+    const {id} = req.decoded;
     const newSources = [];
 
     for (let i = 0; i < sources.length; i += 1) {
@@ -189,10 +189,7 @@ router.post('/check-sources', authorization, async (req, res) => {
       newSources,
     });
   } catch (err) {
-    return res.json({
-      status: 409,
-      message: err.body,
-    });
+    return next(err.body);
   }
 });
 
