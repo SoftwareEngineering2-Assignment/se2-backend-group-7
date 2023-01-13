@@ -86,7 +86,7 @@ router.post('/delete-dashboard',
       return res.json({success: true});
       // Catch the error and return a json file with status code and the message of error.
     } catch (err) {
-      return next(err.boy);
+      return next(err.body);
     }
   }); 
 
