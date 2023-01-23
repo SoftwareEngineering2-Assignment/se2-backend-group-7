@@ -13,7 +13,10 @@ jobs:
       PLATFORM_URI: ${{ secrets.PLATFORM_URI }}
       SERVER_URI: ${{ secrets.SERVER_URI }}
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-  
+      TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+      TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+      TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+
     runs-on: ubuntu-latest
     steps: 
       - name: Checkout repo
