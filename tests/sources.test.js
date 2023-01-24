@@ -95,7 +95,7 @@ test('POST /create-source with valid data and token returns status code 200', as
   const api = await t.context.got.extend({responseType: 'json'});
 
   // Create the request body
-  const request = new Source({name: 'Name'});
+  const request = {name: 'Name'};
 
   // Make the POST request to the /create-source endpoint
   const {body, statusCode} = await api(`sources/create-source?token=${token}`, {
@@ -107,7 +107,6 @@ test('POST /create-source with valid data and token returns status code 200', as
   // Assert that the status code is 200
   t.is(statusCode, 200);
   t.is(body.success, true);
-
 });
 
 test('POST /create-source with duplicate name and valid token returns status code 409', async (t) => {
@@ -129,7 +128,7 @@ test('POST /create-source with duplicate name and valid token returns status cod
   const api = await t.context.got.extend({responseType: 'json'});
 
   // Create the request body with the name "name1"
-  const request = new Source({name: 'name1'});
+  const request = {name: 'name1'};
 
   // Make the POST request to the /create-source endpoint
   const {body} = await api(`sources/create-source?token=${token}`, {
@@ -152,7 +151,7 @@ test('POST /create-source with invalid token returns status code 403', async (t)
   const api = await t.context.got.extend({responseType: 'json'});
 
   // Create the request body
-  const body = new Source({name: 'Name'});
+  const body = {name: 'Name'};
 
   // Make the POST request to the /create-source endpoint
   const {statusCode} = await api(`sources/create-source?token=${token}`, {
@@ -280,7 +279,7 @@ test('POST /change-source with invalid token returns 403', async (t) => {
   const api = await t.context.got.extend({responseType: 'json'});
 
   // Create a request body with the source name to change
-  const body = new Source({name: 'Name'});
+  const body = {name: 'Name'};
   // Send a POST request to the /change-source route with the token as a query parameter and the request body
   const {statusCode} = await api(`sources/change-source?token=${token}`, {
     method: 'POST',

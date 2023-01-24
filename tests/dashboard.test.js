@@ -92,8 +92,8 @@ test('POST /create-dashboard with valid data and token returns status code 200',
   const api = await t.context.got.extend({responseType: 'json'});
   
   // Create the request body
-  const body = new Dashboard({name: 'Test Create Dashboard'});
-  
+  const body = {name: 'Test Create Dashboard'};
+
   // Make the POST request to the /create-dashboard endpoint
   const {statusCode} = await api(`dashboards/create-dashboard?token=${token}`, {
     method: 'POST',
@@ -122,7 +122,7 @@ test('POST /create-dashboard with duplicate name and valid token returns status 
   const api = await t.context.got.extend({responseType: 'json'});
   
   // Create the request body with the name "used_name"
-  const request = new Dashboard({name: 'used_name'});
+  const request = {name: 'used_name'};
 
   // Make the POST request to the /create-dashboard endpoint
   const {body} = await api(`dashboards/create-dashboard?token=${token}`, {
@@ -142,7 +142,7 @@ test('POST /create-dashboard with invalid token returns status code 403', async 
   const api = await t.context.got.extend({responseType: 'json'});
   
   // Create the request body
-  const body = new Dashboard({name: 'Name'});
+  const body = {name: 'Name'};
   
   // Make the POST request to the /create-source endpoint
   const {statusCode} = await api(`dashboards/create-dashboard?token=${token}`, {
