@@ -488,10 +488,14 @@ test('POST /check-password-needed user and owner of dashboard have the same id',
     shared: true,
     owner: user._id,
   });
-
+  
   // Build the request body for the dashboard 
   const request = {
-    user,
+    user: {
+      username: 'user',
+      id: user._id,
+      email: 'email'  
+    },
     dashboardId: checkDashboard._id,
     
   };
@@ -525,7 +529,11 @@ test('POST /check-password-needed user is not the owner and dashboard is not sha
   });
   // Build the request body for the dashboard.
   const request = {
-    user: testUser,
+    user: {
+      username: 'test user',
+      id: testUser._id,
+      email: 'testemail'  
+    },
     dashboardId: checkDashboard._id,
     
   };
@@ -561,7 +569,11 @@ test('POST /check-password-needed user is not the owner and dashboard is shared 
   });
   // Build the request body for the dashboard. 
   const request = {
-    user: testUser,
+    user: {
+      username: 'test user',
+      id: testUser._id,
+      email: 'testemail'  
+    },
     dashboardId: checkDashboard._id,
     
   };
@@ -601,7 +613,11 @@ test('POST /check-password-needed user is not the owner and dashboard is shared 
   });
   // Build the request body for the dashboard 
   const request = {
-    user: testUser,
+    user: {
+      username: 'test user',
+      id: testUser._id,
+      email: 'testemail'  
+    },
     dashboardId: checkDashboard._id,
     
   };
@@ -627,7 +643,11 @@ test('POST /check-password-needed user is not the owner and dashboard is shared 
 test('POST /check-password-needed and dashboard does not exist', async (t) => {
   // Build the request body for the dashboard 
   const request = {
-    user,
+    user: {
+      username: 'user',
+      id: user._id,
+      email: 'email'  
+    },
     dashboardId: 123,
     
   };
