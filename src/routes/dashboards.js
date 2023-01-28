@@ -206,7 +206,7 @@ router.post('/check-password-needed',
   async (req, res, next) => {
     try {
       const {user, dashboardId} = req.body;
-      const userId = user._id;
+      const userId = user.id;
       // Find the dashboard with the id given as a query, also return and the password of the dashboard
       const foundDashboard = await Dashboard.findOne({_id: mongoose.Types.ObjectId(dashboardId)}).select('+password');
       // If doesn't exist trhow an error.
